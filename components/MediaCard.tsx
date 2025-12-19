@@ -1,8 +1,9 @@
 
 import React, { useRef, useState, useMemo } from 'react';
-import { MediaItem, NotionProperty } from '../types';
+import { MediaItem, NotionProperty, Language } from '../types';
 import { motion } from 'framer-motion';
 import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine } from 'lucide-react';
+import { TRANSLATIONS } from '../services/i18nService';
 
 // Mapeo de colores de Notion a clases de Tailwind
 const notionColorMap: Record<string, string> = {
@@ -37,19 +38,31 @@ const getPropertyIcon = (type: string) => {
   }
 };
 
-const formatDate = (dateStr: string) => {
+// Traducir nombre de propiedad según tipo
+const getPropertyLabel = (prop: NotionProperty, lang: Language): string => {
+  const t = TRANSLATIONS[lang];
+  // Para created_time y last_edited_time usamos traducciones específicas
+  if (prop.type === 'created_time') return t.propCreated;
+  if (prop.type === 'last_edited_time') return t.propEdited;
+  // Para otras propiedades, usamos el nombre original de Notion
+  return prop.name;
+};
+
+const formatDate = (dateStr: string, lang: Language) => {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    const locale = lang === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     return dateStr;
   }
 };
 
-const formatDateTime = (dateStr: string) => {
+const formatDateTime = (dateStr: string, lang: Language) => {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { 
+    const locale = lang === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric',
@@ -61,16 +74,20 @@ const formatDateTime = (dateStr: string) => {
   }
 };
 
-const PropertiesCard: React.FC<{ properties: NotionProperty[] }> = ({ properties }) => {
+const PropertiesCard: React.FC<{ properties: NotionProperty[], language: Language }> = ({ properties, language }) => {
   if (!properties || properties.length === 0) return null;
+  const t = TRANSLATIONS[language];
   
   return (
-    <div className="p-4 space-y-2.5">
+    <div className="p-6 bg-gradient-to-br from-surface to-black/40 border-l-4 border-l-primary space-y-3">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-[10px] text-primary font-black uppercase tracking-[0.2em] opacity-80">{t.propDetails}</span>
+      </div>
       {properties.map((prop, idx) => (
         <div key={idx} className="flex items-start gap-3">
           <div className="flex items-center gap-2 min-w-[100px] shrink-0">
-            <span className="text-gray-500">{getPropertyIcon(prop.type)}</span>
-            <span className="text-[11px] text-gray-500 font-medium truncate">{prop.name}</span>
+            <span className="text-primary/70">{getPropertyIcon(prop.type)}</span>
+            <span className="text-[11px] text-gray-400 font-medium truncate">{getPropertyLabel(prop, language)}</span>
           </div>
           <div className="flex-1 flex flex-wrap gap-1.5">
             {prop.type === 'multi_select' && Array.isArray(prop.value) ? (
@@ -87,9 +104,9 @@ const PropertiesCard: React.FC<{ properties: NotionProperty[] }> = ({ properties
                 {prop.value}
               </span>
             ) : prop.type === 'date' ? (
-              <span className="text-[13px] text-white font-medium">{formatDate(prop.value)}</span>
+              <span className="text-[13px] text-white font-medium">{formatDate(prop.value, language)}</span>
             ) : prop.type === 'created_time' || prop.type === 'last_edited_time' ? (
-              <span className="text-[12px] text-gray-400 font-medium">{formatDateTime(prop.value)}</span>
+              <span className="text-[12px] text-gray-300 font-medium">{formatDateTime(prop.value, language)}</span>
             ) : prop.type === 'checkbox' ? (
               <span className={`text-[13px] font-medium ${prop.value ? 'text-emerald-400' : 'text-gray-500'}`}>
                 {prop.value ? '✓' : '✗'}
@@ -112,9 +129,10 @@ interface MediaCardProps {
   item: MediaItem;
   onDragEnd?: (id: string, info: any) => void;
   index?: number;
+  language?: Language;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language = 'es' }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
@@ -301,7 +319,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd }) => {
           </div>
         );
       case 'properties':
-        return <PropertiesCard properties={item.metadata?.properties || []} />;
+        return <PropertiesCard properties={item.metadata?.properties || []} language={language} />;
       default:
         return null;
     }

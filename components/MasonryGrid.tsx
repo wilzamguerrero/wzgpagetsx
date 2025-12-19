@@ -182,7 +182,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
         <div key={colIndex} className="flex flex-col gap-3 lg:gap-5 flex-1 min-w-0">
             {colItems.map((item) => (
               <div key={item.id} data-card-id={item.id} className="w-full">
-                <MediaCard item={item} onDragEnd={handleDragEnd} />
+                <MediaCard item={item} onDragEnd={handleDragEnd} language={language} />
               </div>
             ))}
         </div>
