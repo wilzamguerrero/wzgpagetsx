@@ -12,6 +12,9 @@ const NOTION_VERSION = '2022-06-28';
 export const ROOT_PAGE_ID = import.meta.env.VITE_ROOT_PAGE_ID || '';
 export const NOTION_PORTFOLIO_KEY = import.meta.env.VITE_NOTION_PORTFOLIO_KEY || '';
 
+// Controla si se muestran logs en consola
+export const SHOW_LOGS = false;
+
 export class NotionService {
   private apiKey: string;
   private cache: Map<string, { data: any, timestamp: number }> = new Map();
@@ -23,7 +26,7 @@ export class NotionService {
 
   clearCache(): void {
     this.cache.clear();
-    console.log('[NotionService] Cache cleared');
+    if (SHOW_LOGS) console.log('[NotionService] Cache cleared');
   }
 
   invalidateBlock(blockId: string): void {
@@ -35,7 +38,7 @@ export class NotionService {
         this.cache.delete(key);
       }
     }
-    console.log(`[NotionService] Invalidated ${cleanId}`);
+    if (SHOW_LOGS) console.log(`[NotionService] Invalidated ${cleanId}`);
   }
 
   static formatUUID(idOrUrl: string): string {
@@ -60,7 +63,7 @@ export class NotionService {
     // Construir URL con parámetros
     const url = `${API_BASE}?endpoint=${encodeURIComponent(endpoint)}&method=${method}&_t=${timestamp}`;
     
-    console.log(`[NotionService] Fetching: ${method} ${endpoint}`);
+    if (SHOW_LOGS) console.log(`[NotionService] Fetching: ${method} ${endpoint}`);
     
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET',
@@ -84,14 +87,14 @@ export class NotionService {
     if (!forceRefresh) {
       const cached = this.cache.get(cleanId);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-        console.log(`[NotionService] Cache HIT for ${cleanId}`);
+        if (SHOW_LOGS) console.log(`[NotionService] Cache HIT for ${cleanId}`);
         return cached.data;
       }
     } else {
       this.cache.delete(cleanId);
     }
 
-    console.log(`[NotionService] Fetching blocks for ${cleanId}`);
+    if (SHOW_LOGS) console.log(`[NotionService] Fetching blocks for ${cleanId}`);
 
     let allResults: NotionBlock[] = [];
     let hasMore = true;
@@ -103,7 +106,7 @@ export class NotionService {
       
       const data = await this.notionFetch(endpoint, 'GET');
       
-      console.log(`[NotionService] Got ${data.results?.length || 0} blocks`);
+      if (SHOW_LOGS) console.log(`[NotionService] Got ${data.results?.length || 0} blocks`);
       allResults = [...allResults, ...data.results];
       hasMore = data.has_more;
       startCursor = data.next_cursor;
@@ -120,14 +123,14 @@ export class NotionService {
     if (!forceRefresh) {
       const cached = this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
-        console.log(`[NotionService] Cache HIT for database ${cleanId}`);
+        if (SHOW_LOGS) console.log(`[NotionService] Cache HIT for database ${cleanId}`);
         return cached.data;
       }
     } else {
       this.cache.delete(cacheKey);
     }
 
-    console.log(`[NotionService] Querying database ${cleanId}`);
+    if (SHOW_LOGS) console.log(`[NotionService] Querying database ${cleanId}`);
     
     const data = await this.notionFetch(`/databases/${cleanId}/query`, 'POST', { page_size: 100 });
 
@@ -353,7 +356,7 @@ export class NotionService {
 
   extractMedia(blocks: NotionBlock[], parentId: string): MediaItem[] {
     const seenIds = new Set<string>();
-    console.log(`[NotionService] Extracting media from ${blocks.length} blocks`);
+    if (SHOW_LOGS) console.log(`[NotionService] Extracting media from ${blocks.length} blocks`);
     
     const media = blocks.map((block): MediaItem | null => {
       if (seenIds.has(block.id)) return null;
@@ -408,7 +411,7 @@ export class NotionService {
       return null;
     }).filter((item): item is MediaItem => item !== null);
 
-    console.log(`[NotionService] Extracted ${media.length} media items`);
+    if (SHOW_LOGS) console.log(`[NotionService] Extracted ${media.length} media items`);
     return media;
   }
 

@@ -49,7 +49,10 @@ const BoardTreeItem: React.FC<{
     const [isExpanded, setIsExpanded] = useState(false);
     const [isPickingColor, setIsPickingColor] = useState(false);
     
-    if (!showDatabaseNames && board.type === 'database') {
+    // Las bases de datos que empiezan con * siempre se muestran (excepción a showDatabaseNames)
+    const isStarredDatabase = board.type === 'database' && board.title.startsWith('*');
+    
+    if (!showDatabaseNames && board.type === 'database' && !isStarredDatabase) {
         return (
             <>
                 {children.map(child => (
@@ -152,7 +155,9 @@ const BoardTreeItem: React.FC<{
                         <div className="w-[18px] h-[18px] shrink-0" />
                     )}
                     {getIcon()}
-                    <span className="text-[13px] font-medium truncate leading-none">{board.title}</span>
+                    <span className="text-[13px] font-medium truncate leading-none">
+                        {isStarredDatabase ? board.title.slice(1) : board.title}
+                    </span>
                 </div>
                 
                 <div className="flex items-center gap-1 relative ml-1">

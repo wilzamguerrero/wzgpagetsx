@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY } from './services/notionService';
+import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY, SHOW_LOGS } from './services/notionService';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
@@ -29,16 +29,22 @@ const App: React.FC = () => {
 
   const autoLoadDatabases = async (service: NotionService, currentBoards: Board[], forceRefresh = false) => {
     if (SHOW_DATABASE_NAMES) return currentBoards;
-    const dbsToLoad = currentBoards.filter(b => b.type === 'database' && !b.isLoaded);
+    // Solo auto-cargar DBs que NO empiezan con * (las starred se muestran en sidebar)
+    const dbsToLoad = currentBoards.filter(b => 
+      b.type === 'database' && !b.isLoaded && !b.title.startsWith('*')
+    );
     if (dbsToLoad.length === 0) return currentBoards;
     try {
       const results = await Promise.all(dbsToLoad.map(db => service.queryDatabase(db.id, forceRefresh)));
       const newSubBoards = results.flat();
       const updatedExisting = currentBoards.map(b => 
-        b.type === 'database' ? { ...b, isLoaded: true } : b
+        (b.type === 'database' && !b.title.startsWith('*')) ? { ...b, isLoaded: true } : b
       );
       const allBoards = [...updatedExisting, ...newSubBoards];
-      if (newSubBoards.some(b => b.type === 'database')) return autoLoadDatabases(service, allBoards, forceRefresh);
+      // Continuar recursivamente solo con DBs no-starred
+      if (newSubBoards.some(b => b.type === 'database' && !b.title.startsWith('*'))) {
+        return autoLoadDatabases(service, allBoards, forceRefresh);
+      }
       return allBoards;
     } catch (e) {
       return currentBoards;
@@ -71,7 +77,7 @@ const App: React.FC = () => {
   });
 
   const loadRootContent = async (service: NotionService, forceRefresh = false) => {
-    console.log(`[App] Loading root content, forceRefresh: ${forceRefresh}`);
+    if (SHOW_LOGS) console.log(`[App] Loading root content, forceRefresh: ${forceRefresh}`);
     const blocks = await service.getBlockChildren(ROOT_PAGE_ID, forceRefresh);
     const expanded = await service.getDeepBlockChildren(blocks, forceRefresh);
     const extractedBoards = service.extractBoards(expanded);
@@ -82,7 +88,7 @@ const App: React.FC = () => {
     const finalBoards = await autoLoadDatabases(service, boardsWithIcons, forceRefresh);
     const media = service.extractMedia(expanded, ROOT_PAGE_ID);
     
-    console.log(`[App] Loaded ${finalBoards.length} boards, ${media.length} media items`);
+    if (SHOW_LOGS) console.log(`[App] Loaded ${finalBoards.length} boards, ${media.length} media items`);
     
     const finalMedia = media.length > 0 
       ? [createTitleCard("Galería", ROOT_PAGE_ID), ...media]
@@ -118,7 +124,7 @@ const App: React.FC = () => {
     const selectedBoard = state.boards.find(b => b.id === boardId);
     const boardTitle = selectedBoard?.title || "Galería";
     
-    // Función para encontrar el padre visible (saltando databases si SHOW_DATABASE_NAMES = false)
+    // Función para encontrar el padre visible (saltando databases si SHOW_DATABASE_NAMES = false, excepto las que empiezan con *)
     const findVisibleParent = (board: Board | undefined): string | undefined => {
       if (!board || !board.parentId || board.parentId === state.rootPageId) {
         return undefined;
@@ -126,12 +132,16 @@ const App: React.FC = () => {
       const parentBoard = state.boards.find(b => b.id === board.parentId);
       if (!parentBoard) return undefined;
       
-      // Si no mostramos nombres de DB y el padre es una database, buscar el abuelo
-      if (!SHOW_DATABASE_NAMES && parentBoard.type === 'database') {
+      // Las DBs que empiezan con * siempre son visibles
+      const isStarredDatabase = parentBoard.type === 'database' && parentBoard.title.startsWith('*');
+      
+      // Si no mostramos nombres de DB y el padre es una database (y no es starred), buscar el abuelo
+      if (!SHOW_DATABASE_NAMES && parentBoard.type === 'database' && !isStarredDatabase) {
         return findVisibleParent(parentBoard);
       }
       
-      return parentBoard.title;
+      // Quitar el asterisco del título si es una starred database
+      return isStarredDatabase ? parentBoard.title.slice(1) : parentBoard.title;
     };
     
     const parentTitle = findVisibleParent(selectedBoard);
@@ -154,11 +164,11 @@ const App: React.FC = () => {
         newMedia = [];
       } else {
         const blocks = await service.getBlockChildren(targetId, forceRefresh);
-        console.log(`[App] Got ${blocks.length} blocks for board ${boardTitle}`);
+        if (SHOW_LOGS) console.log(`[App] Got ${blocks.length} blocks for board ${boardTitle}`);
         const allBlocks = await service.getDeepBlockChildren(blocks, forceRefresh);
         newMedia = service.extractMedia(allBlocks, targetId);
         newSubBoards = service.extractBoards(allBlocks, targetId);
-        console.log(`[App] Extracted ${newMedia.length} media items`);
+        if (SHOW_LOGS) console.log(`[App] Extracted ${newMedia.length} media items`);
       }
       
       const processedSubBoards = await autoLoadDatabases(service, newSubBoards, forceRefresh);
