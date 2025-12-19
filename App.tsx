@@ -75,7 +75,11 @@ const App: React.FC = () => {
     const blocks = await service.getBlockChildren(ROOT_PAGE_ID, forceRefresh);
     const expanded = await service.getDeepBlockChildren(blocks, forceRefresh);
     const extractedBoards = service.extractBoards(expanded);
-    const finalBoards = await autoLoadDatabases(service, extractedBoards, forceRefresh);
+    
+    // Enriquecer boards con iconos de Notion
+    const boardsWithIcons = await service.enrichBoardsWithIcons(extractedBoards);
+    
+    const finalBoards = await autoLoadDatabases(service, boardsWithIcons, forceRefresh);
     const media = service.extractMedia(expanded, ROOT_PAGE_ID);
     
     console.log(`[App] Loaded ${finalBoards.length} boards, ${media.length} media items`);

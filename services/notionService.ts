@@ -304,9 +304,51 @@ export class NotionService {
           parentId: parentId,
           type: type,
           hasChildren: block.has_children || type === 'database',
-          isLoaded: false
+          isLoaded: false,
+          icon: undefined as string | undefined // Se cargará después
         };
       });
+  }
+
+  // Obtener información de una página (incluyendo icono)
+  async getPageInfo(pageId: string): Promise<{ icon?: string }> {
+    const cleanId = NotionService.formatUUID(pageId);
+    try {
+      const data = await this.notionFetch(`/pages/${cleanId}`, 'GET');
+      let icon: string | undefined = undefined;
+      if (data.icon) {
+        if (data.icon.type === 'emoji') {
+          icon = data.icon.emoji;
+        } else if (data.icon.type === 'external') {
+          icon = data.icon.external?.url;
+        } else if (data.icon.type === 'file') {
+          icon = data.icon.file?.url;
+        }
+      }
+      return { icon };
+    } catch (e) {
+      console.error(`[NotionService] Error getting page info for ${cleanId}:`, e);
+      return {};
+    }
+  }
+
+  // Enriquecer boards con iconos
+  async enrichBoardsWithIcons(boards: Board[]): Promise<Board[]> {
+    const pagesAndDatabases = boards.filter(b => b.type === 'page' || b.type === 'database');
+    
+    // Obtener iconos en paralelo (máximo 5 a la vez para no sobrecargar)
+    const batchSize = 5;
+    for (let i = 0; i < pagesAndDatabases.length; i += batchSize) {
+      const batch = pagesAndDatabases.slice(i, i + batchSize);
+      const results = await Promise.all(batch.map(b => this.getPageInfo(b.id)));
+      batch.forEach((board, idx) => {
+        if (results[idx].icon) {
+          board.icon = results[idx].icon;
+        }
+      });
+    }
+    
+    return boards;
   }
 
   extractMedia(blocks: NotionBlock[], parentId: string): MediaItem[] {
