@@ -101,7 +101,7 @@ const BoardTreeItem: React.FC<{
             <span 
               className={`text-sm w-4 h-4 flex items-center justify-center shrink-0 transition-all`}
               style={isActive 
-                ? { filter: 'grayscale(1) brightness(2) sepia(1) hue-rotate(100deg) saturate(5)' } // Verde primary
+                ? { filter: 'grayscale(1) brightness(2) sepia(1) hue-rotate(90deg) saturate(5)' } // Verde primary
                 : { filter: 'none' } // Color original
               }
             >
@@ -116,7 +116,7 @@ const BoardTreeItem: React.FC<{
             alt="" 
             className={`w-4 h-4 rounded shrink-0 object-cover transition-all`}
             style={isActive 
-              ? { filter: 'grayscale(1) brightness(1.5) sepia(1) hue-rotate(100deg) saturate(5)' } // Verde primary
+              ? { filter: 'grayscale(1) brightness(1.2) sepia(1) hue-rotate(100deg) saturate(3)' } // Verde primary
               : { filter: 'none' } // Color original
             }
           />
