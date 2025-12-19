@@ -95,15 +95,16 @@ const BoardTreeItem: React.FC<{
     const getIcon = () => {
       // Si tiene icono de Notion, mostrarlo con los colores de la app
       if (board.icon) {
+        // Filtros para teñir los iconos
+        const activeFilter = 'grayscale(1) brightness(1.2) sepia(1) hue-rotate(100deg) saturate(3)'; // Verde primary
+        const inactiveFilter = 'grayscale(1) brightness(1.1) contrast(0.8)'; // Gris/Blanco
+        
         // Si es emoji (string corto sin http)
         if (!board.icon.startsWith('http')) {
           return (
             <span 
               className={`text-sm w-4 h-4 flex items-center justify-center shrink-0 transition-all`}
-              style={isActive 
-                ? { filter: 'grayscale(1) brightness(2) sepia(1) hue-rotate(90deg) saturate(5)' } // Verde primary
-                : { filter: 'none' } // Color original
-              }
+              style={{ filter: isActive ? activeFilter : inactiveFilter }}
             >
               {board.icon}
             </span>
@@ -115,10 +116,7 @@ const BoardTreeItem: React.FC<{
             src={board.icon} 
             alt="" 
             className={`w-4 h-4 rounded shrink-0 object-cover transition-all`}
-            style={isActive 
-              ? { filter: 'grayscale(1) brightness(1.2) sepia(1) hue-rotate(100deg) saturate(3)' } // Verde primary
-              : { filter: 'none' } // Color original
-            }
+            style={{ filter: isActive ? activeFilter : inactiveFilter }}
           />
         );
       }
