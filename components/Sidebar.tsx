@@ -70,25 +70,26 @@ const BoardTreeItem: React.FC<{
         );
     }
 
-    const isExpandable = board.isLoaded ? hasKnownChildren : board.hasChildren;
+    // Solo mostrar chevron si YA tiene hijos cargados (no si potencialmente tiene)
+    const showChevron = hasKnownChildren;
     const currentColor = boardMarkers[board.id] || '';
     const activeMarker = MARKER_COLORS.find(c => c.value === currentColor) || MARKER_COLORS[0];
 
     useEffect(() => {
-        if (isActive && isExpandable) {
+        if (isActive && hasKnownChildren) {
             setIsExpanded(true);
         }
-    }, [isActive, isExpandable]);
+    }, [isActive, hasKnownChildren]);
 
     const handleRowClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         onSelect(board.id);
-        if (isExpandable) setIsExpanded(!isExpanded);
+        if (hasKnownChildren) setIsExpanded(!isExpanded);
     };
 
     const toggleExpandOnly = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (isExpandable) setIsExpanded(!isExpanded);
+        if (hasKnownChildren) setIsExpanded(!isExpanded);
     };
 
     const getIcon = () => {
@@ -110,14 +111,14 @@ const BoardTreeItem: React.FC<{
                 style={{ paddingLeft: `${depth * 12 + 8}px` }}
                 onClick={handleRowClick}>
                 <div className="flex items-center gap-1.5 overflow-hidden flex-1">
-                    <button onClick={toggleExpandOnly} className={`opacity-70 shrink-0 p-0.5 rounded transition-opacity ${isExpandable ? 'hover:bg-white/10' : 'pointer-events-none opacity-0'}`}>
-                        {/* Mostrar loader en lugar del chevron cuando está cargando */}
-                        {isActive && board.hasChildren && !board.isLoaded ? (
-                            <div className="loader scale-[0.25] origin-center w-3.5 h-3.5"></div>
-                        ) : (
-                            isExpandable ? (isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />) : <div className="w-3.5 h-3.5" />
-                        )}
-                    </button>
+                    {/* Solo mostrar chevron si tiene hijos cargados */}
+                    {showChevron ? (
+                        <button onClick={toggleExpandOnly} className="opacity-70 shrink-0 p-0.5 rounded transition-opacity hover:bg-white/10">
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        </button>
+                    ) : (
+                        <div className="w-4.5 h-3.5 shrink-0" />
+                    )}
                     {getIcon()}
                     <span className="text-[13px] font-medium truncate leading-none">{board.title}</span>
                 </div>

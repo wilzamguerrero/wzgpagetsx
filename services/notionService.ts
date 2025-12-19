@@ -138,6 +138,13 @@ export class NotionService {
         title = titleProp.title.map((t: any) => t.plain_text).join('');
       }
 
+      // Extraer número para ordenar (buscar propiedad tipo number)
+      let orderNumber: number | null = null;
+      const numberProp = Object.values(page.properties).find((p: any) => p.type === 'number') as any;
+      if (numberProp && numberProp.number !== null) {
+        orderNumber = numberProp.number;
+      }
+
       // Extraer propiedades (excluyendo el título)
       const properties: NotionProperty[] = [];
       
@@ -165,8 +172,16 @@ export class NotionService {
         type: 'page' as const,
         hasChildren: true,
         isLoaded: false,
-        properties: properties.length > 0 ? properties : undefined
+        properties: properties.length > 0 ? properties : undefined,
+        _orderNumber: orderNumber // Para ordenar
       };
+    });
+
+    // Ordenar por número de mayor a menor (descendente)
+    results.sort((a: any, b: any) => {
+      const numA = a._orderNumber ?? -Infinity;
+      const numB = b._orderNumber ?? -Infinity;
+      return numB - numA; // Descendente: del mayor al menor
     });
 
     this.cache.set(cacheKey, { data: results, timestamp: Date.now() });
