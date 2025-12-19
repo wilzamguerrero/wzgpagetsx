@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NotioPinterest</title>
+    <!-- Icono de la pestaña -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Tailwind CDN is kept for simplicity, though npm install is recommended for production speed -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#191919',
+              surface: '#161616',
+              primary: '#00ffcb',
+              accent: '#3b82f6',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- LightGallery CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.8.2/css/lightgallery-bundle.min.css" />
+    <style>
+      /* Hide global scrollbar across all browsers */
+      html, body {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+
+      html::-webkit-scrollbar, 
+      body::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, and Opera */
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #0f0f0f;
+        color: #ffffff;
+      }
+
+      /* Hide scrollbar for specific utility class */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Custom LightGallery Overrides for modern look */
+      .lg-backdrop {
+        background-color: rgba(10, 10, 10, 0.98) !important;
+        backdrop-filter: blur(15px);
+      }
+
+      /* OVERRIDE LIGHTGALLERY THUMBNAILS */
+      .lg-outer .lg-thumb-outer {
+        background-color: transparent !important;
+        padding: 10px 0 !important;
+      }
+
+      .lg-outer .lg-thumb-item {
+        border: 2px solid #000000 !important; /* Borde negro por defecto */
+        border-radius: 12px !important;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        margin-bottom: 5px !important;
+        opacity: 0.5;
+      }
+
+      .lg-outer .lg-thumb-item.active {
+        border-color: #00ffcb !important; /* Verde primario cuando está seleccionado */
+        opacity: 1;
+        box-shadow: 0 0 15px rgba(0, 255, 203, 0.3);
+        transform: scale(1.05);
+      }
+
+      .lg-outer .lg-thumb-item:hover {
+        opacity: 0.8;
+        border-color: #333 !important;
+      }
+
+      /* Barra de progreso verde */
+      .lg-progress-bar .lg-progress {
+        background-color: #00ffcb !important;
+      }
+
+      /* Botones de navegación */
+      .lg-next, .lg-prev {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 50% !important;
+        backdrop-filter: blur(5px);
+      }
+      
+      .lg-next:hover, .lg-prev:hover {
+        color: #00ffcb !important;
+      }
+
+      /* Estilo para los botones primarios */
+      .bg-primary {
+        color: #000 !important;
+      }
+
+      /* Pulsing Loader Animation */
+      .loader {
+        width: 20px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #00ffcb;
+        box-shadow: 0 0 0 0 rgba(0, 255, 203, 0.4);
+        animation: l2 1.5s infinite linear;
+        position: relative;
+      }
+      .loader:before,
+      .loader:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 0 0 rgba(0, 255, 203, 0.4);
+        animation: inherit;
+        animation-delay: -0.5s;
+      }
+      .loader:after {
+        animation-delay: -1s;
+      }
+      @keyframes l2 {
+        100% {box-shadow: 0 0 0 40px rgba(0, 255, 203, 0)}
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "lightgallery": "https://esm.sh/lightgallery@^2.9.0",
+    "lightgallery/": "https://esm.sh/lightgallery@^2.9.0/",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <!-- Entry point for the application -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
