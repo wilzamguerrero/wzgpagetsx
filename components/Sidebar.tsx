@@ -141,15 +141,15 @@ const BoardTreeItem: React.FC<{
                 <div className="flex items-center gap-1.5 overflow-hidden flex-1">
                     {/* Mostrar loader cuando está cargando, chevron si tiene hijos, o espacio vacío */}
                     {isActive && board.hasChildren && !board.isLoaded ? (
-                        <div className="shrink-0 p-0.5 w-4 h-4 flex items-center justify-center">
+                        <div className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
                             <div className="loader scale-[0.25] origin-center"></div>
                         </div>
                     ) : showChevron ? (
-                        <button onClick={toggleExpandOnly} className="opacity-70 shrink-0 p-0.5 rounded transition-opacity hover:bg-white/10">
+                        <button onClick={toggleExpandOnly} className="opacity-70 shrink-0 w-[18px] h-[18px] flex items-center justify-center rounded transition-opacity hover:bg-white/10">
                             {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                         </button>
                     ) : (
-                        <div className="w-4.5 h-3.5 shrink-0" />
+                        <div className="w-[18px] h-[18px] shrink-0" />
                     )}
                     {getIcon()}
                     <span className="text-[13px] font-medium truncate leading-none">{board.title}</span>
