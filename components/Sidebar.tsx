@@ -177,6 +177,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const strings = t(language);
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showCV, setShowCV] = useState(false);
+
+  // URL del embed de Canva - formato correcto con ?embed
+  const CANVA_EMBED_URL = "https://www.canva.com/design/DAG7-GUGdHQ/7AIMi6rsRZATfrWpT7JRAQ/view?embed";
 
   useEffect(() => {
     const savedMarkers = localStorage.getItem('notio_markers');
@@ -250,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </button>
 
-            <button title="CV" className={getActionBtnClass(false)}>
+            <button onClick={() => setShowCV(true)} title="CV" className={getActionBtnClass(showCV)}>
               <UserRound className="w-4 h-4" />
             </button>
 
@@ -260,6 +264,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Modal CV */}
+      <AnimatePresence>
+        {showCV && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+            onClick={() => setShowCV(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl"
+              style={{ aspectRatio: '8.5/11' }} // Formato carta US Letter
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="absolute top-0 left-0 right-0 h-10 z-10 flex items-center gap-2 px-4">
+                <button 
+                  onClick={() => setShowCV(false)}
+                  className="w-4 h-4 rounded flex items-center justify-center transition-all text-primary hover:text-primary/70 text-xs"
+                >
+                  ✕
+                </button>
+                <span className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Curriculum Vitae</span>
+              </div>
+              
+              {/* Canva Embed */}
+              <iframe
+                src={CANVA_EMBED_URL}
+                className="w-full h-full border-0 bg-black"
+                allowFullScreen
+                allow="fullscreen"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
