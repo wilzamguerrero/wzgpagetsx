@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { MediaItem, NotionProperty } from '../types';
 import { motion } from 'framer-motion';
-import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type } from 'lucide-react';
+import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine } from 'lucide-react';
 
 // Mapeo de colores de Notion a clases de Tailwind
 const notionColorMap: Record<string, string> = {
@@ -21,6 +21,8 @@ const notionColorMap: Record<string, string> = {
 const getPropertyIcon = (type: string) => {
   switch (type) {
     case 'date': return <Calendar className="w-3.5 h-3.5" />;
+    case 'created_time': return <Calendar className="w-3.5 h-3.5" />;
+    case 'last_edited_time': return <PenLine className="w-3.5 h-3.5" />;
     case 'number': return <Hash className="w-3.5 h-3.5" />;
     case 'checkbox': return <CheckSquare className="w-3.5 h-3.5" />;
     case 'select':
@@ -39,6 +41,21 @@ const formatDate = (dateStr: string) => {
   try {
     const date = new Date(dateStr);
     return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+};
+
+const formatDateTime = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   } catch {
     return dateStr;
   }
@@ -71,6 +88,8 @@ const PropertiesCard: React.FC<{ properties: NotionProperty[] }> = ({ properties
               </span>
             ) : prop.type === 'date' ? (
               <span className="text-[13px] text-white font-medium">{formatDate(prop.value)}</span>
+            ) : prop.type === 'created_time' || prop.type === 'last_edited_time' ? (
+              <span className="text-[12px] text-gray-400 font-medium">{formatDateTime(prop.value)}</span>
             ) : prop.type === 'checkbox' ? (
               <span className={`text-[13px] font-medium ${prop.value ? 'text-emerald-400' : 'text-gray-500'}`}>
                 {prop.value ? '✓' : '✗'}

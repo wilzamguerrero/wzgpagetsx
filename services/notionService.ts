@@ -140,6 +140,15 @@ export class NotionService {
 
       // Extraer propiedades (excluyendo el título)
       const properties: NotionProperty[] = [];
+      
+      // Agregar created_time y last_edited_time del sistema
+      if (page.created_time) {
+        properties.push({ name: 'Creado', type: 'created_time', value: page.created_time });
+      }
+      if (page.last_edited_time) {
+        properties.push({ name: 'Editado', type: 'last_edited_time', value: page.last_edited_time });
+      }
+      
       for (const [name, prop] of Object.entries(page.properties) as [string, any][]) {
         if (prop.type === 'title') continue; // Saltar el título
         
