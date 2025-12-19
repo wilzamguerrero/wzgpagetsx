@@ -49,9 +49,17 @@ export interface Board {
   type: 'toggle' | 'page' | 'database';
   hasChildren: boolean;
   isLoaded?: boolean;
+  properties?: NotionProperty[]; // Propiedades de páginas de DB
 }
 
-export type MediaItemType = 'image' | 'video' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file';
+export type MediaItemType = 'image' | 'video' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties';
+
+export interface NotionProperty {
+  name: string;
+  type: string;
+  value: any;
+  color?: string;
+}
 
 export interface MediaItem {
   id: string;
@@ -67,6 +75,8 @@ export interface MediaItem {
     fileSize?: string;
     // Fix: Added parentTitle to metadata to support hierarchical context in title cards
     parentTitle?: string;
+    // Propiedades de Notion para páginas de DB
+    properties?: NotionProperty[];
   };
   parentId: string;
 }

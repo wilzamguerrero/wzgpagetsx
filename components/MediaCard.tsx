@@ -1,8 +1,93 @@
 
 import React, { useRef, useState, useMemo } from 'react';
-import { MediaItem } from '../types';
+import { MediaItem, NotionProperty } from '../types';
 import { motion } from 'framer-motion';
-import { Play, ExternalLink, Code, FileDown, Download } from 'lucide-react';
+import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type } from 'lucide-react';
+
+// Mapeo de colores de Notion a clases de Tailwind
+const notionColorMap: Record<string, string> = {
+  default: 'bg-gray-500/20 text-gray-300',
+  gray: 'bg-gray-500/20 text-gray-300',
+  brown: 'bg-amber-900/30 text-amber-300',
+  orange: 'bg-orange-500/20 text-orange-300',
+  yellow: 'bg-yellow-500/20 text-yellow-300',
+  green: 'bg-emerald-500/20 text-emerald-300',
+  blue: 'bg-blue-500/20 text-blue-300',
+  purple: 'bg-purple-500/20 text-purple-300',
+  pink: 'bg-pink-500/20 text-pink-300',
+  red: 'bg-red-500/20 text-red-300',
+};
+
+const getPropertyIcon = (type: string) => {
+  switch (type) {
+    case 'date': return <Calendar className="w-3.5 h-3.5" />;
+    case 'number': return <Hash className="w-3.5 h-3.5" />;
+    case 'checkbox': return <CheckSquare className="w-3.5 h-3.5" />;
+    case 'select':
+    case 'multi_select': return <Tag className="w-3.5 h-3.5" />;
+    case 'status': return <div className="w-2 h-2 rounded-full bg-current" />;
+    case 'url': return <Link className="w-3.5 h-3.5" />;
+    case 'email': return <Mail className="w-3.5 h-3.5" />;
+    case 'phone_number': return <Phone className="w-3.5 h-3.5" />;
+    case 'people': return <User className="w-3.5 h-3.5" />;
+    case 'rich_text': return <Type className="w-3.5 h-3.5" />;
+    default: return <Tag className="w-3.5 h-3.5" />;
+  }
+};
+
+const formatDate = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+};
+
+const PropertiesCard: React.FC<{ properties: NotionProperty[] }> = ({ properties }) => {
+  if (!properties || properties.length === 0) return null;
+  
+  return (
+    <div className="p-4 space-y-2.5">
+      {properties.map((prop, idx) => (
+        <div key={idx} className="flex items-start gap-3">
+          <div className="flex items-center gap-2 min-w-[100px] shrink-0">
+            <span className="text-gray-500">{getPropertyIcon(prop.type)}</span>
+            <span className="text-[11px] text-gray-500 font-medium truncate">{prop.name}</span>
+          </div>
+          <div className="flex-1 flex flex-wrap gap-1.5">
+            {prop.type === 'multi_select' && Array.isArray(prop.value) ? (
+              prop.value.map((tag: { name: string; color: string }, i: number) => (
+                <span 
+                  key={i} 
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium ${notionColorMap[tag.color] || notionColorMap.default}`}
+                >
+                  {tag.name}
+                </span>
+              ))
+            ) : prop.type === 'select' || prop.type === 'status' ? (
+              <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${notionColorMap[prop.color || 'default']}`}>
+                {prop.value}
+              </span>
+            ) : prop.type === 'date' ? (
+              <span className="text-[13px] text-white font-medium">{formatDate(prop.value)}</span>
+            ) : prop.type === 'checkbox' ? (
+              <span className={`text-[13px] font-medium ${prop.value ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {prop.value ? '✓' : '✗'}
+              </span>
+            ) : prop.type === 'url' ? (
+              <a href={prop.value} target="_blank" rel="noopener noreferrer" className="text-[13px] text-primary hover:underline truncate max-w-[200px]">
+                {prop.value}
+              </a>
+            ) : (
+              <span className="text-[13px] text-white font-medium">{String(prop.value)}</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 interface MediaCardProps {
   item: MediaItem;
@@ -196,6 +281,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd }) => {
               <div className="h-1 w-0 bg-primary group-hover:w-full transition-all duration-500 mt-2" />
           </div>
         );
+      case 'properties':
+        return <PropertiesCard properties={item.metadata?.properties || []} />;
       default:
         return null;
     }

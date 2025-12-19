@@ -1,4 +1,4 @@
-import { NotionBlock, Board, MediaItem, NotionToggleBlock, NotionPageBlock, NotionDatabaseBlock } from '../types';
+import { NotionBlock, Board, MediaItem, NotionToggleBlock, NotionPageBlock, NotionDatabaseBlock, NotionProperty } from '../types';
 
 // Detectar entorno
 const IS_BROWSER = typeof window !== 'undefined';
@@ -138,18 +138,94 @@ export class NotionService {
         title = titleProp.title.map((t: any) => t.plain_text).join('');
       }
 
+      // Extraer propiedades (excluyendo el título)
+      const properties: NotionProperty[] = [];
+      for (const [name, prop] of Object.entries(page.properties) as [string, any][]) {
+        if (prop.type === 'title') continue; // Saltar el título
+        
+        const parsedProp = this.parseProperty(name, prop);
+        if (parsedProp) {
+          properties.push(parsedProp);
+        }
+      }
+
       return {
         id: page.id,
         title: title,
         parentId: databaseId,
         type: 'page' as const,
         hasChildren: true,
-        isLoaded: false
+        isLoaded: false,
+        properties: properties.length > 0 ? properties : undefined
       };
     });
 
     this.cache.set(cacheKey, { data: results, timestamp: Date.now() });
     return results;
+  }
+
+  // Parsear propiedades de Notion
+  private parseProperty(name: string, prop: any): NotionProperty | null {
+    const type = prop.type;
+    let value: any = null;
+    let color: string | undefined;
+
+    switch (type) {
+      case 'date':
+        if (prop.date) {
+          value = prop.date.start;
+          if (prop.date.end) value += ` → ${prop.date.end}`;
+        }
+        break;
+      case 'multi_select':
+        if (prop.multi_select?.length > 0) {
+          value = prop.multi_select.map((s: any) => ({ name: s.name, color: s.color }));
+        }
+        break;
+      case 'select':
+        if (prop.select) {
+          value = prop.select.name;
+          color = prop.select.color;
+        }
+        break;
+      case 'number':
+        value = prop.number;
+        break;
+      case 'checkbox':
+        value = prop.checkbox;
+        break;
+      case 'status':
+        if (prop.status) {
+          value = prop.status.name;
+          color = prop.status.color;
+        }
+        break;
+      case 'url':
+        value = prop.url;
+        break;
+      case 'email':
+        value = prop.email;
+        break;
+      case 'phone_number':
+        value = prop.phone_number;
+        break;
+      case 'rich_text':
+        if (prop.rich_text?.length > 0) {
+          value = prop.rich_text.map((t: any) => t.plain_text).join('');
+        }
+        break;
+      case 'people':
+        if (prop.people?.length > 0) {
+          value = prop.people.map((p: any) => p.name || p.id).join(', ');
+        }
+        break;
+      default:
+        return null;
+    }
+
+    if (value === null || value === undefined || value === '') return null;
+
+    return { name, type, value, color };
   }
 
   async getDeepBlockChildren(blocks: NotionBlock[], forceRefresh: boolean = false): Promise<NotionBlock[]> {

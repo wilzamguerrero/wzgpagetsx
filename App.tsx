@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY } from './services/notionService';
-import { AppState, Board, MediaItem } from './types';
+import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
 import { t } from './services/i18nService';
@@ -62,6 +62,14 @@ const App: React.FC = () => {
     metadata: { parentTitle }
   });
 
+  // Card de propiedades para páginas de base de datos
+  const createPropertiesCard = (id: string, properties: NotionProperty[]): MediaItem => ({
+    id: `props-${id}`,
+    type: 'properties',
+    parentId: id,
+    metadata: { properties }
+  });
+
   const loadRootContent = async (service: NotionService, forceRefresh = false) => {
     console.log(`[App] Loading root content, forceRefresh: ${forceRefresh}`);
     const blocks = await service.getBlockChildren(ROOT_PAGE_ID, forceRefresh);
@@ -106,13 +114,23 @@ const App: React.FC = () => {
     const selectedBoard = state.boards.find(b => b.id === boardId);
     const boardTitle = selectedBoard?.title || "Galería";
     
-    let parentTitle: string | undefined = undefined;
-    if (selectedBoard && selectedBoard.parentId && selectedBoard.parentId !== state.rootPageId) {
-        const parentBoard = state.boards.find(b => b.id === selectedBoard.parentId);
-        if (parentBoard) {
-            parentTitle = parentBoard.title;
-        }
-    }
+    // Función para encontrar el padre visible (saltando databases si SHOW_DATABASE_NAMES = false)
+    const findVisibleParent = (board: Board | undefined): string | undefined => {
+      if (!board || !board.parentId || board.parentId === state.rootPageId) {
+        return undefined;
+      }
+      const parentBoard = state.boards.find(b => b.id === board.parentId);
+      if (!parentBoard) return undefined;
+      
+      // Si no mostramos nombres de DB y el padre es una database, buscar el abuelo
+      if (!SHOW_DATABASE_NAMES && parentBoard.type === 'database') {
+        return findVisibleParent(parentBoard);
+      }
+      
+      return parentBoard.title;
+    };
+    
+    const parentTitle = findVisibleParent(selectedBoard);
 
     setState(prev => ({ ...prev, activeBoardId: boardId, isLoading: true, error: null }));
     if (!notionServiceRef.current) return;
@@ -141,9 +159,18 @@ const App: React.FC = () => {
       
       const processedSubBoards = await autoLoadDatabases(service, newSubBoards, forceRefresh);
       
-      const finalMedia = newMedia.length > 0 
-        ? [createTitleCard(boardTitle, targetId, parentTitle), ...newMedia]
-        : [];
+      // Construir media final con título y propiedades si es página de DB
+      const mediaItems: MediaItem[] = [];
+      if (newMedia.length > 0 || selectedBoard?.properties) {
+        mediaItems.push(createTitleCard(boardTitle, targetId, parentTitle));
+        // Agregar card de propiedades si la página tiene propiedades (viene de DB)
+        if (selectedBoard?.properties && selectedBoard.properties.length > 0) {
+          mediaItems.push(createPropertiesCard(targetId, selectedBoard.properties));
+        }
+        mediaItems.push(...newMedia);
+      }
+      
+      const finalMedia = mediaItems;
 
       setState(prev => {
           const existingIds = new Set(prev.boards.map(b => b.id));
