@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { MediaItem, NotionProperty, Language } from '../types';
 import { motion } from 'framer-motion';
-import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine } from 'lucide-react';
+import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube } from 'lucide-react';
 import { TRANSLATIONS } from '../services/i18nService';
 
 // Mapeo de colores de Notion a clases de Tailwind
@@ -238,6 +238,36 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
                 <div className="absolute bottom-0 left-0 w-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-gradient-to-t from-black/80 to-transparent pointer-events-none pb-6">
                     <p className="text-white text-xs font-medium line-clamp-2">{item.caption}</p>
                 </div>
+            )}
+          </div>
+        );
+      case 'youtube':
+        const videoId = item.metadata?.videoId || '';
+        return (
+          <div className="relative w-full bg-black overflow-hidden">
+            <div className="relative w-full aspect-video">
+              {!isLoaded && (
+                <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
+                  <Youtube className="w-12 h-12 text-red-600/50" />
+                </div>
+              )}
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                title={item.caption || 'YouTube video'}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onLoad={() => setIsLoaded(true)}
+              />
+            </div>
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {item.caption && (
+              <div className="p-3 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center gap-2">
+                  <Youtube className="w-4 h-4 text-red-600 shrink-0" />
+                  <p className="text-white text-xs font-medium line-clamp-1">{item.caption}</p>
+                </div>
+              </div>
             )}
           </div>
         );

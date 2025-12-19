@@ -372,9 +372,28 @@ export class NotionService {
         url = block.image?.file?.url || block.image?.external?.url || '';
         caption = block.image?.caption?.map((t: any) => t.plain_text).join('') || '';
       } else if (block.type === 'video') {
-        type = 'video';
-        url = block.video?.file?.url || block.video?.external?.url || '';
-        caption = block.video?.caption?.map((t: any) => t.plain_text).join('') || '';
+        const videoUrl = block.video?.file?.url || block.video?.external?.url || '';
+        // Detectar si es un video de YouTube
+        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+          type = 'youtube';
+          url = videoUrl;
+          caption = block.video?.caption?.map((t: any) => t.plain_text).join('') || '';
+          // Extraer el ID del video de YouTube
+          let videoId = '';
+          if (videoUrl.includes('youtu.be/')) {
+            videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
+          } else if (videoUrl.includes('youtube.com/watch')) {
+            const urlParams = new URLSearchParams(videoUrl.split('?')[1]);
+            videoId = urlParams.get('v') || '';
+          } else if (videoUrl.includes('youtube.com/embed/')) {
+            videoId = videoUrl.split('youtube.com/embed/')[1]?.split('?')[0] || '';
+          }
+          metadata = { videoId };
+        } else {
+          type = 'video';
+          url = videoUrl;
+          caption = block.video?.caption?.map((t: any) => t.plain_text).join('') || '';
+        }
       } else if (block.type === 'file') {
         type = 'file';
         url = block.file?.file?.url || block.file?.external?.url || '';
@@ -402,6 +421,25 @@ export class NotionService {
         url = block.bookmark?.url || '';
         caption = block.bookmark?.caption?.map((t: any) => t.plain_text).join('') || '';
         content = url;
+      } else if (block.type === 'embed') {
+        const embedUrl = block.embed?.url || '';
+        // Detectar si es un embed de YouTube
+        if (embedUrl.includes('youtube.com') || embedUrl.includes('youtu.be')) {
+          type = 'youtube';
+          url = embedUrl;
+          caption = block.embed?.caption?.map((t: any) => t.plain_text).join('') || '';
+          // Extraer el ID del video de YouTube
+          let videoId = '';
+          if (embedUrl.includes('youtu.be/')) {
+            videoId = embedUrl.split('youtu.be/')[1]?.split('?')[0] || '';
+          } else if (embedUrl.includes('youtube.com/watch')) {
+            const urlParams = new URLSearchParams(embedUrl.split('?')[1]);
+            videoId = urlParams.get('v') || '';
+          } else if (embedUrl.includes('youtube.com/embed/')) {
+            videoId = embedUrl.split('youtube.com/embed/')[1]?.split('?')[0] || '';
+          }
+          metadata = { videoId };
+        }
       }
 
       if (type && (url || content)) {

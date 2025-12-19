@@ -53,7 +53,7 @@ export interface Board {
   icon?: string; // Emoji o URL del icono de Notion
 }
 
-export type MediaItemType = 'image' | 'video' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties';
+export type MediaItemType = 'image' | 'video' | 'youtube' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties';
 
 export interface NotionProperty {
   name: string;
@@ -78,6 +78,8 @@ export interface MediaItem {
     parentTitle?: string;
     // Propiedades de Notion para páginas de DB
     properties?: NotionProperty[];
+    // YouTube video ID for embedded videos
+    videoId?: string;
   };
   parentId: string;
 }
