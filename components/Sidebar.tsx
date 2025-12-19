@@ -111,7 +111,12 @@ const BoardTreeItem: React.FC<{
                 onClick={handleRowClick}>
                 <div className="flex items-center gap-1.5 overflow-hidden flex-1">
                     <button onClick={toggleExpandOnly} className={`opacity-70 shrink-0 p-0.5 rounded transition-opacity ${isExpandable ? 'hover:bg-white/10' : 'pointer-events-none opacity-0'}`}>
-                        {isExpandable ? (isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />) : <div className="w-3.5 h-3.5" />}
+                        {/* Mostrar loader en lugar del chevron cuando está cargando */}
+                        {isActive && board.hasChildren && !board.isLoaded ? (
+                            <div className="loader scale-[0.2] origin-center w-3.5 h-3.5"></div>
+                        ) : (
+                            isExpandable ? (isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />) : <div className="w-3.5 h-3.5" />
+                        )}
                     </button>
                     {getIcon()}
                     <span className="text-[13px] font-medium truncate leading-none">{board.title}</span>
@@ -145,14 +150,6 @@ const BoardTreeItem: React.FC<{
             
             {isExpanded && (
                 <div className="relative">
-                    {board.hasChildren && !board.isLoaded && (
-                        <div className="flex items-center gap-4 py-3" style={{ paddingLeft: `${(depth + 1) * 12 + 28}px` }}>
-                            <div className="loader scale-[0.25] origin-center -ml-2"></div>
-                            <span className="text-[9px] uppercase font-black tracking-widest text-primary/60 -ml-1">
-                                {strings.loading}
-                            </span>
-                        </div>
-                    )}
                     {children.map(child => (
                         <BoardTreeItem 
                             key={child.id} 
