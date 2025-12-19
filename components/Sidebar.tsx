@@ -113,7 +113,7 @@ const BoardTreeItem: React.FC<{
                     <button onClick={toggleExpandOnly} className={`opacity-70 shrink-0 p-0.5 rounded transition-opacity ${isExpandable ? 'hover:bg-white/10' : 'pointer-events-none opacity-0'}`}>
                         {/* Mostrar loader en lugar del chevron cuando está cargando */}
                         {isActive && board.hasChildren && !board.isLoaded ? (
-                            <div className="loader scale-[0.2] origin-center w-3.5 h-3.5"></div>
+                            <div className="loader scale-[0.25] origin-center w-3.5 h-3.5"></div>
                         ) : (
                             isExpandable ? (isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />) : <div className="w-3.5 h-3.5" />
                         )}
