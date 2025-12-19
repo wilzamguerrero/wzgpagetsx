@@ -93,14 +93,34 @@ const BoardTreeItem: React.FC<{
     };
 
     const getIcon = () => {
-      // Si tiene icono de Notion, mostrarlo
+      // Si tiene icono de Notion, mostrarlo con los colores de la app
       if (board.icon) {
         // Si es emoji (string corto sin http)
         if (!board.icon.startsWith('http')) {
-          return <span className="text-sm w-4 h-4 flex items-center justify-center shrink-0">{board.icon}</span>;
+          return (
+            <span 
+              className={`text-sm w-4 h-4 flex items-center justify-center shrink-0 transition-all`}
+              style={isActive 
+                ? { filter: 'grayscale(1) brightness(2) sepia(1) hue-rotate(100deg) saturate(5)' } // Verde primary
+                : { filter: 'none' } // Color original
+              }
+            >
+              {board.icon}
+            </span>
+          );
         }
         // Si es URL de imagen
-        return <img src={board.icon} alt="" className="w-4 h-4 rounded shrink-0 object-cover" />;
+        return (
+          <img 
+            src={board.icon} 
+            alt="" 
+            className={`w-4 h-4 rounded shrink-0 object-cover transition-all`}
+            style={isActive 
+              ? { filter: 'grayscale(1) brightness(1.5) sepia(1) hue-rotate(100deg) saturate(5)' } // Verde primary
+              : { filter: 'none' } // Color original
+            }
+          />
+        );
       }
       // Iconos por defecto según tipo
       if (board.type === 'page') return <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'fill-current' : ''}`} />;
