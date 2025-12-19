@@ -93,6 +93,16 @@ const BoardTreeItem: React.FC<{
     };
 
     const getIcon = () => {
+      // Si tiene icono de Notion, mostrarlo
+      if (board.icon) {
+        // Si es emoji (string corto sin http)
+        if (!board.icon.startsWith('http')) {
+          return <span className="text-sm w-4 h-4 flex items-center justify-center shrink-0">{board.icon}</span>;
+        }
+        // Si es URL de imagen
+        return <img src={board.icon} alt="" className="w-4 h-4 rounded shrink-0 object-cover" />;
+      }
+      // Iconos por defecto según tipo
       if (board.type === 'page') return <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'fill-current' : ''}`} />;
       if (board.type === 'database') return <Database className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'fill-current text-primary' : ''}`} />;
       return <Folder className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'fill-current' : ''}`} />;

@@ -138,6 +138,18 @@ export class NotionService {
         title = titleProp.title.map((t: any) => t.plain_text).join('');
       }
 
+      // Extraer icono de la página
+      let icon: string | undefined = undefined;
+      if (page.icon) {
+        if (page.icon.type === 'emoji') {
+          icon = page.icon.emoji;
+        } else if (page.icon.type === 'external') {
+          icon = page.icon.external?.url;
+        } else if (page.icon.type === 'file') {
+          icon = page.icon.file?.url;
+        }
+      }
+
       // Extraer número para ordenar (buscar propiedad tipo number)
       let orderNumber: number | null = null;
       const numberProp = Object.values(page.properties).find((p: any) => p.type === 'number') as any;
@@ -173,6 +185,7 @@ export class NotionService {
         hasChildren: true,
         isLoaded: false,
         properties: properties.length > 0 ? properties : undefined,
+        icon: icon,
         _orderNumber: orderNumber // Para ordenar
       };
     });

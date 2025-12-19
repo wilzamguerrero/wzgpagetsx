@@ -50,6 +50,7 @@ export interface Board {
   hasChildren: boolean;
   isLoaded?: boolean;
   properties?: NotionProperty[]; // Propiedades de páginas de DB
+  icon?: string; // Emoji o URL del icono de Notion
 }
 
 export type MediaItemType = 'image' | 'video' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties';
