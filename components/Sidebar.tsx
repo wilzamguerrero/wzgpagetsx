@@ -245,17 +245,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button onClick={onToggleLanguage} title={strings.language} className="w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all group border border-white/5">
               <span className="text-[10px] font-black text-primary tracking-wider group-hover:scale-110">{language.toUpperCase()}</span>
             </button>
-            
-            <button onClick={onGoHome} title="Home" className={getActionBtnClass(activeBoardId === null)}>
-              <Home className="w-4 h-4" />
+
+            <button onClick={toggleFullscreen} title="Fullscreen" className={getActionBtnClass(isFullscreen)}>
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </button>
 
             <button title="CV" className={getActionBtnClass(false)}>
               <UserRound className="w-4 h-4" />
             </button>
 
-            <button onClick={toggleFullscreen} title="Fullscreen" className={getActionBtnClass(isFullscreen)}>
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            <button onClick={onGoHome} title="Home" className={getActionBtnClass(activeBoardId === null)}>
+              <Home className="w-4 h-4" />
             </button>
           </div>
         </div>
