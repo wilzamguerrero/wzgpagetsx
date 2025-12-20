@@ -440,6 +440,33 @@ export class NotionService {
           }
           metadata = { videoId };
         }
+      } else if (block.type === 'bulleted_list_item') {
+        content = block.bulleted_list_item?.rich_text?.map((t: any) => t.plain_text).join('') || '';
+        if (content.trim()) type = 'bulleted_list';
+      } else if (block.type === 'numbered_list_item') {
+        content = block.numbered_list_item?.rich_text?.map((t: any) => t.plain_text).join('') || '';
+        if (content.trim()) type = 'numbered_list';
+      } else if (block.type === 'to_do') {
+        content = block.to_do?.rich_text?.map((t: any) => t.plain_text).join('') || '';
+        if (content.trim()) {
+          type = 'todo';
+          metadata = { checked: block.to_do?.checked || false };
+        }
+      } else if (block.type === 'quote') {
+        content = block.quote?.rich_text?.map((t: any) => t.plain_text).join('') || '';
+        if (content.trim()) type = 'quote';
+      } else if (block.type === 'callout') {
+        content = block.callout?.rich_text?.map((t: any) => t.plain_text).join('') || '';
+        if (content.trim()) {
+          type = 'callout';
+          let icon = '';
+          if (block.callout?.icon?.type === 'emoji') {
+            icon = block.callout.icon.emoji;
+          } else if (block.callout?.icon?.type === 'external') {
+            icon = block.callout.icon.external?.url || '';
+          }
+          metadata = { icon, color: block.callout?.color || 'default' };
+        }
       }
 
       if (type && (url || content)) {

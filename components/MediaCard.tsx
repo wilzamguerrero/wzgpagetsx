@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { MediaItem, NotionProperty, Language } from '../types';
 import { motion } from 'framer-motion';
-import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube } from 'lucide-react';
+import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube, List, ListOrdered, Square, CheckSquare2, Quote, MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from '../services/i18nService';
 
 // Mapeo de colores de Notion a clases de Tailwind
@@ -350,6 +350,83 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
         );
       case 'properties':
         return <PropertiesCard properties={item.metadata?.properties || []} language={language} />;
+      case 'bulleted_list':
+        return (
+          <div className="p-5 flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+            <p className="text-gray-200 text-[15px] leading-relaxed">{item.content}</p>
+          </div>
+        );
+      case 'numbered_list':
+        return (
+          <div className="p-5 flex items-start gap-3">
+            <span className="text-primary font-bold text-[15px] min-w-[20px]">{item.metadata?.number || '•'}</span>
+            <p className="text-gray-200 text-[15px] leading-relaxed">{item.content}</p>
+          </div>
+        );
+      case 'todo':
+        const isChecked = item.metadata?.checked;
+        return (
+          <div className="p-5 flex items-start gap-3">
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+              isChecked ? 'bg-primary border-primary' : 'border-gray-500'
+            }`}>
+              {isChecked && <CheckSquare2 className="w-3 h-3 text-black" />}
+            </div>
+            <p className={`text-[15px] leading-relaxed transition-colors ${
+              isChecked ? 'text-gray-500 line-through' : 'text-gray-200'
+            }`}>{item.content}</p>
+          </div>
+        );
+      case 'quote':
+        return (
+          <div className="p-6 border-l-4 border-l-gray-500 bg-gradient-to-r from-white/5 to-transparent">
+            <div className="flex items-start gap-3">
+              <Quote className="w-5 h-5 text-gray-500 shrink-0 mt-1" />
+              <p className="text-gray-300 text-[15px] leading-relaxed italic">{item.content}</p>
+            </div>
+          </div>
+        );
+      case 'callout':
+        const calloutIcon = item.metadata?.icon;
+        const calloutColor = item.metadata?.color || 'default';
+        const calloutBgMap: Record<string, string> = {
+          default: 'bg-gray-500/10 border-gray-500/30',
+          gray: 'bg-gray-500/10 border-gray-500/30',
+          brown: 'bg-amber-900/20 border-amber-700/30',
+          orange: 'bg-orange-500/10 border-orange-500/30',
+          yellow: 'bg-yellow-500/10 border-yellow-500/30',
+          green: 'bg-emerald-500/10 border-emerald-500/30',
+          blue: 'bg-blue-500/10 border-blue-500/30',
+          purple: 'bg-purple-500/10 border-purple-500/30',
+          pink: 'bg-pink-500/10 border-pink-500/30',
+          red: 'bg-red-500/10 border-red-500/30',
+          gray_background: 'bg-gray-500/20 border-gray-500/30',
+          brown_background: 'bg-amber-900/30 border-amber-700/30',
+          orange_background: 'bg-orange-500/20 border-orange-500/30',
+          yellow_background: 'bg-yellow-500/20 border-yellow-500/30',
+          green_background: 'bg-emerald-500/20 border-emerald-500/30',
+          blue_background: 'bg-blue-500/20 border-blue-500/30',
+          purple_background: 'bg-purple-500/20 border-purple-500/30',
+          pink_background: 'bg-pink-500/20 border-pink-500/30',
+          red_background: 'bg-red-500/20 border-red-500/30',
+        };
+        return (
+          <div className={`p-5 border-l-4 ${calloutBgMap[calloutColor] || calloutBgMap.default}`}>
+            <div className="flex items-start gap-3">
+              {calloutIcon ? (
+                calloutIcon.startsWith('http') ? (
+                  <img src={calloutIcon} alt="" className="w-6 h-6 shrink-0" />
+                ) : (
+                  <span className="text-xl shrink-0">{calloutIcon}</span>
+                )
+              ) : (
+                <MessageSquare className="w-5 h-5 text-gray-400 shrink-0" />
+              )}
+              <p className="text-gray-200 text-[15px] leading-relaxed">{item.content}</p>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
