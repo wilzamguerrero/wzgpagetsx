@@ -32,6 +32,12 @@ export const TRANSLATIONS = {
     propPeople: "Personas",
     propText: "Texto",
     propDetails: "Detalles",
+    // Atajos de teclado
+    shortcutSidebar: "Menú",
+    shortcutColumns: "Columnas",
+    shortcutFullscreen: "Pantalla",
+    shortcutCV: "CV",
+    shortcutHome: "Inicio",
     phrases: [
       "La vida es lo que pasa mientras estás ocupado haciendo otros planes.",
       "El único modo de hacer un gran trabajo es amar lo que haces.",
@@ -75,6 +81,12 @@ export const TRANSLATIONS = {
     propPeople: "People",
     propText: "Text",
     propDetails: "Details",
+    // Keyboard shortcuts
+    shortcutSidebar: "Menu",
+    shortcutColumns: "Columns",
+    shortcutFullscreen: "Screen",
+    shortcutCV: "CV",
+    shortcutHome: "Home",
     phrases: [
       "Life is what happens while you're busy making other plans.",
       "The only way to do great work is to love what you do.",

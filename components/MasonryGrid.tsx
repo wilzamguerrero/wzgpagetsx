@@ -5,6 +5,7 @@ import { MediaCard, GroupedCard } from './MediaCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from '../services/i18nService';
 import { groupContentForReading, GroupedMediaItem, numberListItems } from '../services/contentGrouper';
+import { Menu, Columns3, Maximize, UserRound, Home } from 'lucide-react';
 
 // @ts-ignore
 import lightGallery from 'lightgallery';

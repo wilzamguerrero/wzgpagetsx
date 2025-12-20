@@ -220,14 +220,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // URL del embed de Canva - formato correcto con ?embed
   const CANVA_EMBED_URL = "https://www.canva.com/design/DAG7-GUGdHQ/7AIMi6rsRZATfrWpT7JRAQ/view?embed";
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  };
+
   useEffect(() => {
     const savedMarkers = localStorage.getItem('notio_markers');
     if (savedMarkers) try { setBoardMarkers(JSON.parse(savedMarkers)); } catch (e) {}
 
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+    
+    // Atajos de teclado para X (fullscreen), C (CV), V (home)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).isContentEditable) return;
+      
+      const key = e.key.toLowerCase();
+      if (key === 'x') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (key === 'c') {
+        e.preventDefault();
+        setShowCV(prev => !prev);
+      } else if (key === 'v') {
+        e.preventDefault();
+        onGoHome();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onGoHome]);
 
   const handleSetMarker = (id: string, color: string) => {
     const newMarkers = { ...boardMarkers, [id]: color };
@@ -235,25 +263,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     localStorage.setItem('notio_markers', JSON.stringify(newMarkers));
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-  };
-
   const getActionBtnClass = (isActive: boolean) => `
     w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center 
     transition-all border border-white/5 
     ${isActive 
-      ? 'text-primary border-primary/20 bg-primary/5 shadow-[0_0_10px_rgba(0,255,203,0.1)]' 
+      ? 'text-primary border-primary/20 bg-primary/5' 
       : 'text-gray-500 hover:text-primary hover:border-primary/10 hover:bg-white/10'
     }
   `;
 
   return (
     <>
-      <button onClick={onToggle} className={`fixed top-10 z-50 w-6 h-12 bg-surface border-y border-r border-white/5 rounded-r-xl shadow-lg transition-all ${isOpen ? 'left-[17rem]' : 'left-0 text-primary'}`}>
-        {isOpen ? <ChevronLeft className="w-4 h-4 mx-auto" /> : <div className="w-1 h-4 bg-primary mx-auto rounded-full" />}
-      </button>
+      <div className={`fixed top-10 z-50 group/sidebar-toggle transition-all ${isOpen ? 'left-[17rem]' : 'left-0'}`}>
+        <button onClick={onToggle} className="w-6 h-12 bg-surface border-y border-r border-white/5 rounded-r-xl shadow-lg transition-all text-primary">
+          {isOpen ? <ChevronLeft className="w-4 h-4 mx-auto" /> : <div className="w-1 h-4 bg-primary mx-auto rounded-full" />}
+        </button>
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/sidebar-toggle:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+          <span className="text-[10px] text-gray-400">Menu</span>
+          <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">Z</span>
+        </div>
+      </div>
       <div className={`fixed top-4 bottom-4 w-64 bg-surface border border-white/5 flex flex-col z-40 transition-transform shadow-2xl rounded-2xl left-4 ${isOpen ? 'translate-x-0' : '-translate-x-[120%]'}`}>
         <div className="p-4 border-b border-white/5 flex flex-col gap-3">
           <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest px-1">{strings.columns}</span>
@@ -284,21 +313,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <div className="p-3 border-t border-white/5 bg-black/20">
           <div className="flex flex-wrap justify-center items-center gap-2">
-            <button onClick={onToggleLanguage} title={strings.language} className="w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all group border border-white/5">
-              <span className="text-[10px] font-black text-primary tracking-wider group-hover:scale-110">{language.toUpperCase()}</span>
-            </button>
+            <div className="relative group/tooltip">
+              <button onClick={onToggleLanguage} className="w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all group border border-white/5">
+                <span className="text-[10px] font-black text-primary tracking-wider group-hover:scale-110">{language.toUpperCase()}</span>
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">{strings.language}</span>
+              </div>
+            </div>
 
-            <button onClick={toggleFullscreen} title="Fullscreen" className={getActionBtnClass(isFullscreen)}>
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </button>
+            <div className="relative group/tooltip">
+              <button onClick={toggleFullscreen} className={getActionBtnClass(isFullscreen)}>
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">Fullscreen</span>
+                <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">X</span>
+              </div>
+            </div>
 
-            <button onClick={() => setShowCV(true)} title="CV" className={getActionBtnClass(showCV)}>
-              <UserRound className="w-4 h-4" />
-            </button>
+            <div className="relative group/tooltip">
+              <button onClick={() => setShowCV(true)} className={getActionBtnClass(showCV)}>
+                <UserRound className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">CV</span>
+                <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">C</span>
+              </div>
+            </div>
 
-            <button onClick={onGoHome} title="Home" className={getActionBtnClass(activeBoardId === null)}>
-              <Home className="w-4 h-4" />
-            </button>
+            <div className="relative group/tooltip">
+              <button onClick={onGoHome} className={getActionBtnClass(activeBoardId === null)}>
+                <Home className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">Home</span>
+                <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">V</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
