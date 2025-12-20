@@ -179,7 +179,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4">
-        <div className="flex flex-col items-center text-center w-full max-w-lg">
+        <div className="flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative w-52 h-52 md:w-60 md:h-60 bg-[#191919] border border-[#191919] rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
               <AnimatePresence>
                 {isPulsing && (
