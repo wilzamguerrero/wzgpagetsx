@@ -1,9 +1,10 @@
 
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { MediaItem, Language } from '../types';
-import { MediaCard } from './MediaCard';
+import { MediaCard, GroupedCard } from './MediaCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from '../services/i18nService';
+import { groupContentForReading, GroupedMediaItem, numberListItems } from '../services/contentGrouper';
 
 // @ts-ignore
 import lightGallery from 'lightgallery';
@@ -37,6 +38,12 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [isPulsing, setIsPulsing] = useState(false);
 
+  // Agrupar items para mejor orden de lectura y numerar listas
+  const groupedItems = useMemo(() => {
+    const numbered = numberListItems(items);
+    return groupContentForReading(numbered);
+  }, [items]);
+
   useEffect(() => {
     setCurrentPhrase(strings.phrases[Math.floor(Math.random() * strings.phrases.length)]);
   }, [language]);
@@ -65,12 +72,12 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   }, [items.length, isLoading, language]);
 
   const columns = useMemo(() => {
-    const cols: MediaItem[][] = Array.from({ length: columnCount }, () => []);
-    items.forEach((item, index) => {
+    const cols: GroupedMediaItem[][] = Array.from({ length: columnCount }, () => []);
+    groupedItems.forEach((item, index) => {
       cols[index % columnCount].push(item);
     });
     return cols;
-  }, [items, columnCount]);
+  }, [groupedItems, columnCount]);
 
   const handleDragEnd = (draggedId: string, info: any) => {
     if (!onReorder || !containerRef.current) return;
@@ -78,7 +85,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     const point = info.point;
     const cards = containerRef.current.querySelectorAll('[data-card-id]');
     
-    let closestId = null;
+    let closestId: string | null = null;
     let minDistance = Infinity;
 
     cards.forEach((cardEl: any) => {
@@ -103,13 +110,28 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     });
 
     if (closestId) {
-      const oldIndex = items.findIndex(item => item.id === draggedId);
-      const targetIndex = items.findIndex(item => item.id === closestId);
+      // Encontrar los índices en groupedItems
+      const oldGroupIndex = groupedItems.findIndex(item => item.id === draggedId);
+      const targetGroupIndex = groupedItems.findIndex(item => item.id === closestId);
       
-      if (oldIndex !== -1 && targetIndex !== -1 && oldIndex !== targetIndex) {
-        const newItems = [...items];
-        const [movedItem] = newItems.splice(oldIndex, 1);
-        newItems.splice(targetIndex, 0, movedItem);
+      if (oldGroupIndex !== -1 && targetGroupIndex !== -1 && oldGroupIndex !== targetGroupIndex) {
+        // Reordenar los groupedItems
+        const newGroupedItems = [...groupedItems];
+        const [movedItem] = newGroupedItems.splice(oldGroupIndex, 1);
+        newGroupedItems.splice(targetGroupIndex, 0, movedItem);
+        
+        // Expandir los grupos a items originales para pasar a onReorder
+        const newItems: MediaItem[] = [];
+        for (const groupedItem of newGroupedItems) {
+          if (groupedItem.isGroup && groupedItem.groupItems) {
+            // Es un grupo - añadir todos sus items
+            newItems.push(...groupedItem.groupItems);
+          } else {
+            // Es un item individual
+            newItems.push(groupedItem as MediaItem);
+          }
+        }
+        
         onReorder(newItems);
       }
     }
@@ -189,7 +211,16 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
         <div key={colIndex} className="flex flex-col gap-3 lg:gap-5 flex-1 min-w-0">
             {colItems.map((item) => (
               <div key={item.id} data-card-id={item.id} className="w-full">
-                <MediaCard item={item} onDragEnd={handleDragEnd} language={language} />
+                {item.isGroup && item.groupItems ? (
+                  <GroupedCard 
+                    items={item.groupItems} 
+                    language={language} 
+                    groupId={item.id}
+                    onDragEnd={handleDragEnd}
+                  />
+                ) : (
+                  <MediaCard item={item} onDragEnd={handleDragEnd} language={language} />
+                )}
               </div>
             ))}
         </div>

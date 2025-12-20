@@ -5,6 +5,12 @@ import { motion } from 'framer-motion';
 import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube, List, ListOrdered, Square, CheckSquare2, Quote, MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from '../services/i18nService';
 
+// Tipos para items agrupados
+interface GroupedMediaItem extends MediaItem {
+  isGroup?: boolean;
+  groupItems?: MediaItem[];
+}
+
 // Mapeo de colores de Notion a clases de Tailwind
 const notionColorMap: Record<string, string> = {
   default: 'bg-gray-500/20 text-gray-300',
@@ -254,11 +260,39 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={item.caption || 'YouTube video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
+              {/* Overlay para permitir drag - se oculta al hacer clic para interactuar con el video */}
+              {!isInteracting && (
+                <div 
+                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
+                  onClick={(e) => {
+                    if (!isDragging) {
+                      e.stopPropagation();
+                      setIsInteracting(true);
+                    }
+                  }}
+                >
+                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              )}
+              {/* Botón para volver al modo arrastrable */}
+              {isInteracting && (
+                <button
+                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsInteracting(false);
+                  }}
+                >
+                  ✕
+                </button>
+              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
             {item.caption && (
@@ -439,6 +473,152 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
       className={cardWrapperClasses}
     >
       {renderContent()}
+    </motion.div>
+  );
+};
+
+/**
+ * Componente para renderizar un grupo de items relacionados en una sola card
+ * Preserva el orden de lectura al mostrar heading + contenido relacionado juntos
+ */
+interface GroupedCardProps {
+  items: MediaItem[];
+  language?: Language;
+  groupId: string;
+  onDragEnd?: (id: string, info: any) => void;
+}
+
+export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId, onDragEnd }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const cardWrapperClasses = "group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black cursor-grab active:cursor-grabbing select-none touch-none transition-colors duration-300 hover:border-white/10";
+
+  const dragConfig = useMemo(() => ({
+    drag: true as const,
+    dragSnapToOrigin: true,
+    dragElastic: 0, 
+    dragMomentum: false,
+    onDragStart: () => setIsDragging(true),
+    onDragEnd: (_: any, info: any) => {
+      setTimeout(() => setIsDragging(false), 30);
+      if (onDragEnd) onDragEnd(groupId, info);
+    },
+    whileDrag: { 
+      scale: 1.02,
+      zIndex: 100,
+      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.8)",
+      opacity: 0.98
+    },
+    transition: { type: "spring" as const, stiffness: 800, damping: 50, mass: 0.3 }
+  }), [groupId, onDragEnd]);
+
+  const renderGroupItem = (item: MediaItem, index: number) => {
+    switch (item.type) {
+      case 'heading':
+        const isMain = item.metadata?.level === 1;
+        const isFirst = index === 0;
+        return (
+          <div key={item.id} className={`px-6 ${isFirst ? 'pt-6 pb-3' : 'pt-4 pb-3'} border-l-4 border-l-primary/40`}>
+            <h2 className={`font-bold text-white tracking-tight ${isMain ? 'text-2xl' : 'text-xl'}`}>{item.content}</h2>
+          </div>
+        );
+      case 'text':
+        return (
+          <div key={item.id} className="px-6 py-2">
+            <p className="text-gray-200 text-[15px] leading-relaxed whitespace-pre-wrap font-medium">{item.content}</p>
+          </div>
+        );
+      case 'bulleted_list':
+        return (
+          <div key={item.id} className="px-6 py-1.5 flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+            <p className="text-gray-200 text-[15px] leading-relaxed">{item.content}</p>
+          </div>
+        );
+      case 'numbered_list':
+        return (
+          <div key={item.id} className="px-6 py-1.5 flex items-start gap-3">
+            <span className="text-primary font-bold text-[15px] min-w-[20px]">{item.metadata?.number || '•'}</span>
+            <p className="text-gray-200 text-[15px] leading-relaxed">{item.content}</p>
+          </div>
+        );
+      case 'todo':
+        const isChecked = item.metadata?.checked;
+        return (
+          <div key={item.id} className="px-6 py-1.5 flex items-start gap-3">
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+              isChecked ? 'bg-primary border-primary' : 'border-gray-500'
+            }`}>
+              {isChecked && <CheckSquare2 className="w-3 h-3 text-black" />}
+            </div>
+            <p className={`text-[15px] leading-relaxed transition-colors ${
+              isChecked ? 'text-gray-500 line-through' : 'text-gray-200'
+            }`}>{item.content}</p>
+          </div>
+        );
+      case 'quote':
+        return (
+          <div key={item.id} className="mx-6 my-2 p-4 border-l-4 border-l-gray-500 bg-gradient-to-r from-white/5 to-transparent rounded-r-lg">
+            <div className="flex items-start gap-3">
+              <Quote className="w-4 h-4 text-gray-500 shrink-0 mt-1" />
+              <p className="text-gray-300 text-[14px] leading-relaxed italic">{item.content}</p>
+            </div>
+          </div>
+        );
+      case 'callout':
+        const calloutIcon = item.metadata?.icon;
+        const calloutColor = item.metadata?.color || 'default';
+        const calloutBgMap: Record<string, string> = {
+          default: 'bg-gray-500/10 border-gray-500/30',
+          gray: 'bg-gray-500/10 border-gray-500/30',
+          brown: 'bg-amber-900/20 border-amber-700/30',
+          orange: 'bg-orange-500/10 border-orange-500/30',
+          yellow: 'bg-yellow-500/10 border-yellow-500/30',
+          green: 'bg-emerald-500/10 border-emerald-500/30',
+          blue: 'bg-blue-500/10 border-blue-500/30',
+          purple: 'bg-purple-500/10 border-purple-500/30',
+          pink: 'bg-pink-500/10 border-pink-500/30',
+          red: 'bg-red-500/10 border-red-500/30',
+          gray_background: 'bg-gray-500/20 border-gray-500/30',
+          brown_background: 'bg-amber-900/30 border-amber-700/30',
+          orange_background: 'bg-orange-500/20 border-orange-500/30',
+          yellow_background: 'bg-yellow-500/20 border-yellow-500/30',
+          green_background: 'bg-emerald-500/20 border-emerald-500/30',
+          blue_background: 'bg-blue-500/20 border-blue-500/30',
+          purple_background: 'bg-purple-500/20 border-purple-500/30',
+          pink_background: 'bg-pink-500/20 border-pink-500/30',
+          red_background: 'bg-red-500/20 border-red-500/30',
+        };
+        return (
+          <div key={item.id} className={`mx-6 my-2 p-4 border-l-4 rounded-r-lg ${calloutBgMap[calloutColor] || calloutBgMap.default}`}>
+            <div className="flex items-start gap-3">
+              {calloutIcon ? (
+                calloutIcon.startsWith('http') ? (
+                  <img src={calloutIcon} alt="" className="w-5 h-5 shrink-0" />
+                ) : (
+                  <span className="text-lg shrink-0">{calloutIcon}</span>
+                )
+              ) : (
+                <MessageSquare className="w-4 h-4 text-gray-400 shrink-0" />
+              )}
+              <p className="text-gray-200 text-[14px] leading-relaxed">{item.content}</p>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      layout
+      {...dragConfig}
+      className={cardWrapperClasses}
+    >
+      <div className="pb-4">
+        {items.map((item, index) => renderGroupItem(item, index))}
+      </div>
     </motion.div>
   );
 };
