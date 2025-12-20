@@ -53,8 +53,21 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignorar si estamos en un input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).isContentEditable) return;
-      if (e.key.toLowerCase() === 'z') setIsSidebarOpen(prev => !prev);
+      
+      // Toggle sidebar con 'Z'
+      if (e.key.toLowerCase() === 'z') {
+        setIsSidebarOpen(prev => !prev);
+        return;
+      }
+      
+      // Cambiar columnas con teclas 1-6 (tanto numpad como números normales)
+      const key = e.key;
+      if (['1', '2', '3', '4', '5', '6'].includes(key)) {
+        e.preventDefault();
+        setColumnCount(parseInt(key));
+      }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
