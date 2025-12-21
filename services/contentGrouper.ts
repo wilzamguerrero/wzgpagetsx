@@ -9,6 +9,7 @@ const STANDALONE_TYPES: MediaItem['type'][] = [
   'video',
   'youtube',
   'loom',
+  'canva',
   'code',
   'link',
   'file',

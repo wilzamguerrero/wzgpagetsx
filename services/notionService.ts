@@ -465,6 +465,17 @@ export class NotionService {
             videoId = embedUrl.split('/embed/')[1]?.split('?')[0] || '';
           }
           metadata = { videoId };
+        } else if (embedUrl.includes('canva.com')) {
+          // Detectar si es un embed de Canva
+          type = 'canva';
+          url = embedUrl;
+          caption = block.embed?.caption?.map((t: any) => t.plain_text).join('') || '';
+          // Extraer el ID del diseño de Canva (formato: canva.com/design/DESIGN_ID/...)
+          let designId = '';
+          if (embedUrl.includes('/design/')) {
+            designId = embedUrl.split('/design/')[1]?.split('/')[0] || '';
+          }
+          metadata = { designId, embedUrl };
         }
       } else if (block.type === 'bulleted_list_item') {
         content = block.bulleted_list_item?.rich_text?.map((t: any) => t.plain_text).join('') || '';

@@ -364,6 +364,72 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
             )}
           </div>
         );
+      case 'canva':
+        const canvaEmbedUrl = item.metadata?.embedUrl || item.url || '';
+        // Convertir URL de Canva a formato embed si es necesario
+        const canvaIframeSrc = canvaEmbedUrl.includes('/watch') 
+          ? canvaEmbedUrl 
+          : canvaEmbedUrl.replace('/design/', '/design/').replace(/\/[^/]*$/, '/watch?embed');
+        return (
+          <div className="relative w-full bg-black overflow-hidden">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              {!isLoaded && (
+                <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center opacity-50">
+                    <span className="text-white font-bold text-lg">C</span>
+                  </div>
+                </div>
+              )}
+              <iframe
+                src={canvaIframeSrc}
+                title={item.caption || 'Canva design'}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
+                allow="fullscreen"
+                allowFullScreen
+                onLoad={() => setIsLoaded(true)}
+              />
+              {/* Overlay para permitir drag */}
+              {!isInteracting && (
+                <div 
+                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
+                  onClick={(e) => {
+                    if (!isDragging) {
+                      e.stopPropagation();
+                      setIsInteracting(true);
+                    }
+                  }}
+                >
+                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ExternalLink className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              )}
+              {/* Botón para volver al modo arrastrable */}
+              {isInteracting && (
+                <button
+                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsInteracting(false);
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {item.caption && (
+              <div className="p-3 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-[8px]">C</span>
+                  </div>
+                  <p className="text-white text-xs font-medium line-clamp-1">{item.caption}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
       case 'image':
         return (
           <div 

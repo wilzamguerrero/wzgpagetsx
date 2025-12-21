@@ -53,7 +53,7 @@ export interface Board {
   icon?: string; // Emoji o URL del icono de Notion
 }
 
-export type MediaItemType = 'image' | 'video' | 'youtube' | 'loom' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties' | 'bulleted_list' | 'numbered_list' | 'todo' | 'quote' | 'callout';
+export type MediaItemType = 'image' | 'video' | 'youtube' | 'loom' | 'canva' | 'text' | 'heading' | 'code' | 'link' | 'title' | 'file' | 'properties' | 'bulleted_list' | 'numbered_list' | 'todo' | 'quote' | 'callout';
 
 export interface NotionProperty {
   name: string;
