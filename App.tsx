@@ -148,11 +148,12 @@ const App: React.FC = () => {
       try {
         const service = new NotionService(NOTION_PORTFOLIO_KEY);
         notionServiceRef.current = service;
-        const { boards, media } = await loadRootContent(service, true);
+        const { boards } = await loadRootContent(service, true);
         
         // Si hay un boardId inicial en la URL, cargar ese board después de tener los boards
         const initialBoardId = getInitialBoardId();
-        setState(prev => ({ ...prev, boards, media, isLoading: false, error: null }));
+        // Home siempre empieza con media vacío para mostrar logo y frases
+        setState(prev => ({ ...prev, boards, media: [], isLoading: false, error: null }));
         
         // Establecer el estado inicial del historial
         window.history.replaceState({ boardId: initialBoardId }, '', window.location.href);
@@ -185,9 +186,8 @@ const App: React.FC = () => {
       
       if (boardId === null) {
         // Ir a home
-        handleGoHome().finally(() => {
-          isNavigatingRef.current = false;
-        });
+        handleGoHome();
+        isNavigatingRef.current = false;
       } else {
         // Ir al board específico
         handleSelectBoard(boardId, false).finally(() => {
@@ -293,19 +293,11 @@ const App: React.FC = () => {
   };
 
   const handleGoHome = async () => {
-    setState(prev => ({ ...prev, activeBoardId: null, isLoading: true }));
+    // Home muestra el logo y frases, sin media
+    setState(prev => ({ ...prev, activeBoardId: null, media: [], isLoading: false }));
     
     // Actualizar URL para navegación con historial
     updateUrl(null);
-    
-    if (notionServiceRef.current) {
-      try {
-        const { boards, media } = await loadRootContent(notionServiceRef.current, true);
-        setState(prev => ({ ...prev, boards, media, isLoading: false, error: null }));
-      } catch (err: any) {
-        setState(prev => ({ ...prev, isLoading: false, error: err.message }));
-      }
-    }
   };
 
   const handleReorder = (newMedia: MediaItem[]) => {
