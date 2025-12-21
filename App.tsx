@@ -3,6 +3,7 @@ import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY, SHOW_LOGS } from './
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
+import { GlitchOverlay } from './components/GlitchOverlay';
 import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
@@ -26,6 +27,7 @@ const App: React.FC = () => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [columnCount, setColumnCount] = useState(4);
+  const [effectsEnabled, setEffectsEnabled] = useState(true);
   const notionServiceRef = useRef<NotionService | null>(null);
   
   const strings = t(state.language);
@@ -79,6 +81,12 @@ const App: React.FC = () => {
       // Toggle sidebar con 'Z'
       if (e.key.toLowerCase() === 'z') {
         setIsSidebarOpen(prev => !prev);
+        return;
+      }
+      
+      // Toggle effects con 'F'
+      if (e.key.toLowerCase() === 'f') {
+        setEffectsEnabled(prev => !prev);
         return;
       }
       
@@ -311,6 +319,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
+      {/* Glitch overlay with chromatic aberration - only when effects enabled */}
+      <GlitchOverlay isActive={isSidebarOpen && effectsEnabled} />
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 transition-opacity" onClick={() => setIsSidebarOpen(false)} />
       )}
@@ -331,8 +341,10 @@ const App: React.FC = () => {
         language={state.language}
         onToggleLanguage={() => setState(prev => ({ ...prev, language: prev.language === 'es' ? 'en' : 'es' }))}
         showDatabaseNames={SHOW_DATABASE_NAMES}
+        effectsEnabled={effectsEnabled}
+        onToggleEffects={() => setEffectsEnabled(prev => !prev)}
       />
-      <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? 'lg:blur-none blur-sm' : ''}`}>
+      <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
         {state.error && (
             <div className="mx-auto mt-10 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 max-w-2xl text-center">
                 <p className="font-bold">{strings.errorTitle}</p>
@@ -347,6 +359,8 @@ const App: React.FC = () => {
             columnCount={columnCount} 
             language={state.language} 
             onReorder={handleReorder}
+            isSidebarOpen={isSidebarOpen}
+            effectsEnabled={effectsEnabled}
           />
         </div>
       </main>

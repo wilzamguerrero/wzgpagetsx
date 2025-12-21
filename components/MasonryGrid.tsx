@@ -28,9 +28,11 @@ interface MasonryGridProps {
   columnCount: number;
   language: Language;
   onReorder?: (items: MediaItem[]) => void;
+  isSidebarOpen?: boolean;
+  effectsEnabled?: boolean;
 }
 
-export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder }) => {
+export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder, isSidebarOpen = false, effectsEnabled = true }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryInstanceRef = useRef<any>(null);
   
@@ -38,12 +40,91 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   const [currentPhrase, setCurrentPhrase] = useState(strings.phrases[0]);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [isPulsing, setIsPulsing] = useState(false);
+  
+  // Chaotic shuffle state for glitch effect
+  const [shuffledOrder, setShuffledOrder] = useState<string[]>([]);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const shuffleTimeoutRef = useRef<number>();
+  const shuffleIntervalRef = useRef<number>();
 
   // Agrupar items para mejor orden de lectura y numerar listas
   const groupedItems = useMemo(() => {
     const numbered = numberListItems(items);
     return groupContentForReading(numbered);
   }, [items]);
+
+  // Reset shuffle order when items change (navigating to another page)
+  useEffect(() => {
+    setShuffledOrder([]);
+    setIsShuffling(false);
+  }, [items]);
+
+  // Chaotic shuffle effect when sidebar is open AND effects are enabled
+  useEffect(() => {
+    if (isSidebarOpen && effectsEnabled && items.length > 1) {
+      // Start shuffling after 10 seconds
+      shuffleTimeoutRef.current = window.setTimeout(() => {
+        setIsShuffling(true);
+        
+        // Shuffle every 2-4 seconds randomly
+        const doShuffle = () => {
+          // Use current shuffledOrder if exists, otherwise use groupedItems order
+          const currentIds = shuffledOrder.length > 0 
+            ? [...shuffledOrder] 
+            : groupedItems.map(item => item.id);
+          
+          // Fisher-Yates shuffle
+          for (let i = currentIds.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentIds[i], currentIds[j]] = [currentIds[j], currentIds[i]];
+          }
+          setShuffledOrder(currentIds);
+          
+          // Schedule next shuffle with random delay
+          const nextDelay = 8000 + Math.random() * 2000;
+          shuffleIntervalRef.current = window.setTimeout(doShuffle, nextDelay);
+        };
+        
+        doShuffle();
+      }, 8000);
+    } else {
+      // Stop shuffling when sidebar closes or effects disabled, but KEEP the current order
+      setIsShuffling(false);
+      // Don't reset shuffledOrder - keep the cards where they are!
+      if (shuffleTimeoutRef.current) {
+        clearTimeout(shuffleTimeoutRef.current);
+      }
+      if (shuffleIntervalRef.current) {
+        clearTimeout(shuffleIntervalRef.current);
+      }
+    }
+    
+    return () => {
+      if (shuffleTimeoutRef.current) clearTimeout(shuffleTimeoutRef.current);
+      if (shuffleIntervalRef.current) clearTimeout(shuffleIntervalRef.current);
+    };
+  }, [isSidebarOpen, effectsEnabled, items.length]);
+
+  // Get items in shuffled order if we have a shuffle order
+  const displayItems = useMemo(() => {
+    if (shuffledOrder.length === 0) {
+      return groupedItems;
+    }
+    
+    const itemMap = new Map(groupedItems.map(item => [item.id, item]));
+    const ordered = shuffledOrder
+      .map(id => itemMap.get(id))
+      .filter((item): item is GroupedMediaItem => item !== undefined);
+    
+    // If items changed (new items added), append them at the end
+    if (ordered.length < groupedItems.length) {
+      const orderedIds = new Set(shuffledOrder);
+      const newItems = groupedItems.filter(item => !orderedIds.has(item.id));
+      return [...ordered, ...newItems];
+    }
+    
+    return ordered;
+  }, [groupedItems, shuffledOrder]);
 
   useEffect(() => {
     setCurrentPhrase(strings.phrases[Math.floor(Math.random() * strings.phrases.length)]);
@@ -74,11 +155,11 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   const columns = useMemo(() => {
     const cols: GroupedMediaItem[][] = Array.from({ length: columnCount }, () => []);
-    groupedItems.forEach((item, index) => {
+    displayItems.forEach((item, index) => {
       cols[index % columnCount].push(item);
     });
     return cols;
-  }, [groupedItems, columnCount]);
+  }, [displayItems, columnCount]);
 
   const handleDragEnd = (draggedId: string, info: any) => {
     if (!onReorder || !containerRef.current) return;
@@ -225,11 +306,29 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   }
 
   return (
-    <div ref={containerRef} className="flex gap-3 lg:gap-5 w-full justify-center items-start">
+    <div ref={containerRef} className={`flex gap-3 lg:gap-5 w-full justify-center items-start ${isShuffling ? 'shuffling-active' : ''}`}>
       {columns.map((colItems, colIndex) => (
         <div key={colIndex} className="flex flex-col gap-3 lg:gap-5 flex-1 min-w-0">
+          <AnimatePresence mode="popLayout">
             {colItems.map((item) => (
-              <div key={item.id} data-card-id={item.id} className="w-full">
+              <motion.div 
+                key={item.id} 
+                data-card-id={item.id} 
+                className="w-full"
+                layout
+                initial={isShuffling ? { opacity: 0.5, scale: 0.95 } : false}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  transition: { 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 25,
+                    duration: 0.5 
+                  }
+                }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
                 {item.isGroup && item.groupItems ? (
                   <GroupedCard 
                     items={item.groupItems} 
@@ -240,8 +339,9 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
                 ) : (
                   <MediaCard item={item} onDragEnd={handleDragEnd} language={language} />
                 )}
-              </div>
+              </motion.div>
             ))}
+          </AnimatePresence>
         </div>
       ))}
     </div>

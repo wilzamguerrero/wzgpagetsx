@@ -4,7 +4,7 @@ import { Board, Language } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Folder, FileText, Database, ChevronRight, ChevronDown, ChevronLeft, 
-    Maximize, Minimize, Circle, Home, UserRound
+    Maximize, Minimize, Circle, Home, UserRound, Sparkles
 } from 'lucide-react';
 import { t } from '../services/i18nService';
 
@@ -21,6 +21,8 @@ interface SidebarProps {
   language: Language;
   onToggleLanguage: () => void;
   showDatabaseNames: boolean;
+  effectsEnabled: boolean;
+  onToggleEffects: () => void;
 }
 
 const MARKER_COLORS = [
@@ -210,7 +212,8 @@ const BoardTreeItem: React.FC<{
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
     boards, activeBoardId, onSelectBoard, onGoHome, isOpen, onToggle, 
-    columnCount, onColumnChange, language, onToggleLanguage, showDatabaseNames 
+    columnCount, onColumnChange, language, onToggleLanguage, showDatabaseNames,
+    effectsEnabled, onToggleEffects
 }) => {
   const strings = t(language);
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
@@ -319,6 +322,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-400">{strings.language}</span>
+              </div>
+            </div>
+
+            <div className="relative group/tooltip">
+              <button onClick={onToggleEffects} className={getActionBtnClass(effectsEnabled)}>
+                <Sparkles className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">{effectsEnabled ? 'FX On' : 'FX Off'}</span>
+                <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">F</span>
               </div>
             </div>
 
