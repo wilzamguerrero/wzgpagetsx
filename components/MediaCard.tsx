@@ -261,7 +261,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={item.caption || 'YouTube video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} pointer-events-none`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
@@ -283,7 +283,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.loom.com/embed/${loomVideoId}`}
                 title={item.caption || 'Loom video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} pointer-events-none`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
