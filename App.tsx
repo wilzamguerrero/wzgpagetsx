@@ -7,19 +7,13 @@ import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
 
-// Obtener boardId inicial desde la URL
-const getInitialBoardId = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('board');
-};
-
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     isAuthenticated: true, 
     apiKey: NOTION_PORTFOLIO_KEY,
     rootPageId: ROOT_PAGE_ID,
     boards: [], 
-    activeBoardId: getInitialBoardId(),
+    activeBoardId: null, // Siempre empezar en home al hacer refresh
     media: [],
     isLoading: true,
     error: null,
@@ -150,13 +144,13 @@ const App: React.FC = () => {
         notionServiceRef.current = service;
         const { boards } = await loadRootContent(service, true);
         
-        // Si hay un boardId inicial en la URL, cargar ese board después de tener los boards
-        const initialBoardId = getInitialBoardId();
         // Home siempre empieza con media vacío para mostrar logo y frases
         setState(prev => ({ ...prev, boards, media: [], isLoading: false, error: null }));
         
-        // Establecer el estado inicial del historial
-        window.history.replaceState({ boardId: initialBoardId }, '', window.location.href);
+        // Limpiar la URL y establecer el estado inicial del historial en home
+        const url = new URL(window.location.href);
+        url.searchParams.delete('board');
+        window.history.replaceState({ boardId: null }, 'Portfolio', url.toString());
         
       } catch (err: any) {
         console.error('[App] Init error:', err);
@@ -165,18 +159,6 @@ const App: React.FC = () => {
     };
     initApp();
   }, []);
-
-  // Cargar el board inicial desde la URL después de que los boards estén disponibles
-  useEffect(() => {
-    const initialBoardId = getInitialBoardId();
-    if (initialBoardId && state.boards.length > 0 && !state.isLoading && state.activeBoardId === initialBoardId) {
-      // Cargar el contenido del board inicial
-      isNavigatingRef.current = true;
-      handleSelectBoard(initialBoardId, false).finally(() => {
-        isNavigatingRef.current = false;
-      });
-    }
-  }, [state.boards.length]);
 
   // Escuchar navegación con flechas del navegador (back/forward)
   useEffect(() => {
