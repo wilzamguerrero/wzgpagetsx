@@ -261,39 +261,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={item.caption || 'YouTube video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Overlay para permitir drag - se oculta al hacer clic para interactuar con el video */}
-              {!isInteracting && (
-                <div 
-                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
-                  onClick={(e) => {
-                    if (!isDragging) {
-                      e.stopPropagation();
-                      setIsInteracting(true);
-                    }
-                  }}
-                >
-                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Play className="w-8 h-8 text-white fill-white ml-1" />
-                  </div>
-                </div>
-              )}
-              {/* Botón para volver al modo arrastrable */}
-              {isInteracting && (
-                <button
-                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsInteracting(false);
-                  }}
-                >
-                  ✕
-                </button>
-              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
             {item.caption && (
@@ -319,39 +291,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.loom.com/embed/${loomVideoId}`}
                 title={item.caption || 'Loom video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Overlay para permitir drag */}
-              {!isInteracting && (
-                <div 
-                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
-                  onClick={(e) => {
-                    if (!isDragging) {
-                      e.stopPropagation();
-                      setIsInteracting(true);
-                    }
-                  }}
-                >
-                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Play className="w-8 h-8 text-white fill-white ml-1" />
-                  </div>
-                </div>
-              )}
-              {/* Botón para volver al modo arrastrable */}
-              {isInteracting && (
-                <button
-                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsInteracting(false);
-                  }}
-                >
-                  ✕
-                </button>
-              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
             {item.caption && (
@@ -372,7 +316,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
           : canvaEmbedUrl.replace('/design/', '/design/').replace(/\/[^/]*$/, '/watch?embed');
         return (
           <div className="relative w-full bg-black overflow-hidden">
-            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            <div className="relative w-full min-h-[400px] h-[70vh] max-h-[800px]">
               {!isLoaded && (
                 <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center opacity-50">
@@ -383,39 +327,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={canvaIframeSrc}
                 title={item.caption || 'Canva design'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="fullscreen"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Overlay para permitir drag */}
-              {!isInteracting && (
-                <div 
-                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
-                  onClick={(e) => {
-                    if (!isDragging) {
-                      e.stopPropagation();
-                      setIsInteracting(true);
-                    }
-                  }}
-                >
-                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ExternalLink className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              )}
-              {/* Botón para volver al modo arrastrable */}
-              {isInteracting && (
-                <button
-                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsInteracting(false);
-                  }}
-                >
-                  ✕
-                </button>
-              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
             {item.caption && (
