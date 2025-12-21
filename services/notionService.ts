@@ -402,7 +402,8 @@ export class NotionService {
         metadata = { fileName: rawCaption || fileNameFromUrl };
       } else if (block.type === 'paragraph') {
         content = block.paragraph?.rich_text?.map((t: any) => t.plain_text).join('') || '';
-        if (content.trim()) type = 'text';
+        // Incluir párrafos vacíos como separadores (doble espacio en Notion)
+        type = 'text';
       } else if (block.type.startsWith('heading_')) {
         const level = parseInt(block.type.split('_')[1]);
         content = block[block.type]?.rich_text?.map((t: any) => t.plain_text).join('') || '';
@@ -469,7 +470,7 @@ export class NotionService {
         }
       }
 
-      if (type && (url || content)) {
+      if (type && (url || content || type === 'text')) {
         seenIds.add(block.id);
         return { id: block.id, type, url, caption, content, metadata, parentId };
       }

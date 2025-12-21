@@ -1,24 +1,8 @@
 import { MediaItem } from '../types';
 
 /**
- * Tipos de contenido que se pueden agrupar en una sección de lectura
- */
-const GROUPABLE_TYPES: MediaItem['type'][] = [
-  'text',
-  'bulleted_list',
-  'numbered_list',
-  'todo',
-  'quote',
-  'callout'
-];
-
-/**
- * Tipos de contenido que inician una nueva sección
- */
-const SECTION_STARTERS: MediaItem['type'][] = ['heading'];
-
-/**
  * Tipos de contenido que siempre se muestran como card individual
+ * (no se agrupan con otros aunque estén juntos)
  */
 const STANDALONE_TYPES: MediaItem['type'][] = [
   'image',
@@ -34,98 +18,80 @@ const STANDALONE_TYPES: MediaItem['type'][] = [
 export interface GroupedMediaItem extends MediaItem {
   isGroup?: boolean;
   groupItems?: MediaItem[];
+  headings?: MediaItem[];
 }
 
 /**
- * Agrupa los items de contenido para mejorar el orden de lectura.
+ * Agrupa los items de contenido basándose en espacios vacíos.
  * 
- * Estrategia:
- * - Los headings inician una nueva sección
- * - El texto, listas y otros contenidos "leíbles" se agrupan con el heading anterior
- * - Imágenes, videos, código, links se mantienen como cards independientes
- * - Si hay contenido sin heading previo, se agrupa solo
+ * Estrategia SIMPLE:
+ * - Todo lo que está junto (sin párrafos vacíos) va en el MISMO grupo
+ * - Un párrafo vacío (espacio) separa grupos
+ * - Imágenes, videos, código, links siempre van solos
  */
 export function groupContentForReading(items: MediaItem[]): GroupedMediaItem[] {
   if (items.length === 0) return [];
   
   const result: GroupedMediaItem[] = [];
   let currentGroup: MediaItem[] = [];
-  let currentHeading: MediaItem | null = null;
   
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     
+    // Detectar separadores vacíos (espacio en Notion)
+    if (item.type === 'text' && (!item.content || item.content.trim() === '')) {
+      // Párrafo vacío = separador
+      if (currentGroup.length > 0) {
+        result.push(createGroup(currentGroup));
+        currentGroup = [];
+      }
+      continue;
+    }
+    
     // Tipos standalone siempre van solos
     if (STANDALONE_TYPES.includes(item.type)) {
-      // Si hay grupo pendiente, finalizarlo primero
-      if (currentGroup.length > 0 || currentHeading) {
-        result.push(createGroup(currentHeading, currentGroup));
+      // Finalizar grupo actual primero
+      if (currentGroup.length > 0) {
+        result.push(createGroup(currentGroup));
         currentGroup = [];
-        currentHeading = null;
       }
       // Añadir el item standalone
       result.push({ ...item, isGroup: false });
       continue;
     }
     
-    // Si es un heading, inicia nueva sección
-    if (SECTION_STARTERS.includes(item.type)) {
-      // Finalizar grupo anterior si existe
-      if (currentGroup.length > 0 || currentHeading) {
-        result.push(createGroup(currentHeading, currentGroup));
-        currentGroup = [];
-      }
-      currentHeading = item;
-      continue;
-    }
-    
-    // Contenido agrupable - añadir al grupo actual
-    if (GROUPABLE_TYPES.includes(item.type)) {
-      currentGroup.push(item);
-      continue;
-    }
-    
-    // Cualquier otro tipo - añadir solo
-    if (currentGroup.length > 0 || currentHeading) {
-      result.push(createGroup(currentHeading, currentGroup));
-      currentGroup = [];
-      currentHeading = null;
-    }
-    result.push({ ...item, isGroup: false });
+    // Todo lo demás se agrupa
+    currentGroup.push(item);
   }
   
-  // Finalizar último grupo si existe
-  if (currentGroup.length > 0 || currentHeading) {
-    result.push(createGroup(currentHeading, currentGroup));
+  // Finalizar último grupo
+  if (currentGroup.length > 0) {
+    result.push(createGroup(currentGroup));
   }
   
   return result;
 }
 
-function createGroup(heading: MediaItem | null, items: MediaItem[]): GroupedMediaItem {
-  // Si solo hay un item y no hay heading, devolver como item simple
-  if (!heading && items.length === 1) {
+function createGroup(items: MediaItem[]): GroupedMediaItem {
+  // Si solo hay un item, devolver como item simple
+  if (items.length === 1) {
     return { ...items[0], isGroup: false };
   }
   
-  // Si solo hay heading sin contenido, devolver el heading como item simple
-  if (heading && items.length === 0) {
-    return { ...heading, isGroup: false };
-  }
-  
   // Crear grupo combinado
-  const allItems = heading ? [heading, ...items] : items;
-  const groupId = allItems.map(i => i.id).join('-');
+  const groupId = items.map(i => i.id).join('-');
+  const headings = items.filter(i => i.type === 'heading');
   
   return {
     id: groupId,
-    type: 'text', // Tipo base para el grupo
-    content: heading?.content || items[0]?.content || '',
-    parentId: items[0]?.parentId || heading?.parentId || '',
+    type: 'text',
+    content: items[0]?.content || '',
+    parentId: items[0]?.parentId || '',
     isGroup: true,
-    groupItems: allItems,
+    groupItems: items,
+    headings: headings.length > 0 ? headings : undefined,
     metadata: {
-      level: heading?.metadata?.level
+      level: headings[0]?.metadata?.level
     }
   };
 }

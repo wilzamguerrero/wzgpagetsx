@@ -9,6 +9,7 @@ import { TRANSLATIONS } from '../services/i18nService';
 interface GroupedMediaItem extends MediaItem {
   isGroup?: boolean;
   groupItems?: MediaItem[];
+  headings?: MediaItem[]; // Múltiples headings apilados
 }
 
 // Mapeo de colores de Notion a clases de Tailwind
@@ -512,14 +513,31 @@ export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es'
     transition: { type: "spring" as const, stiffness: 800, damping: 50, mass: 0.3 }
   }), [groupId, onDragEnd]);
 
-  const renderGroupItem = (item: MediaItem, index: number) => {
+  const renderGroupItem = (item: MediaItem, index: number, allItems: MediaItem[]) => {
     switch (item.type) {
       case 'heading':
-        const isMain = item.metadata?.level === 1;
+        const level = item.metadata?.level || 2;
         const isFirst = index === 0;
+        // Verificar si el siguiente item también es heading (headings apilados)
+        const nextItem = allItems[index + 1];
+        const isLastHeading = !nextItem || nextItem.type !== 'heading';
+        
+        // Tamaños según nivel: h1 más grande, h2 mediano, h3 más pequeño
+        const sizeClasses = {
+          1: 'text-2xl md:text-3xl',
+          2: 'text-xl md:text-2xl', 
+          3: 'text-lg md:text-xl'
+        };
+        const textSize = sizeClasses[level as 1 | 2 | 3] || sizeClasses[3];
+        
+        // Padding ajustado para headings apilados
+        const paddingClasses = isFirst 
+          ? (isLastHeading ? 'pt-6 pb-3' : 'pt-6 pb-1') 
+          : (isLastHeading ? 'pt-1 pb-3' : 'pt-1 pb-1');
+        
         return (
-          <div key={item.id} className={`px-6 ${isFirst ? 'pt-6 pb-3' : 'pt-4 pb-3'} border-l-4 border-l-primary/40`}>
-            <h2 className={`font-bold text-white tracking-tight ${isMain ? 'text-2xl' : 'text-xl'}`}>{item.content}</h2>
+          <div key={item.id} className={`px-6 ${paddingClasses} border-l-4 border-l-primary/40`}>
+            <h2 className={`font-bold text-white tracking-tight ${textSize}`}>{item.content}</h2>
           </div>
         );
       case 'text':
@@ -617,7 +635,7 @@ export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es'
       className={cardWrapperClasses}
     >
       <div className="pb-4">
-        {items.map((item, index) => renderGroupItem(item, index))}
+        {items.map((item, index) => renderGroupItem(item, index, items))}
       </div>
     </motion.div>
   );
