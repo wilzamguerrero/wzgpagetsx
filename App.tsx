@@ -238,7 +238,27 @@ const App: React.FC = () => {
       
       // Construir media final con título y propiedades si es página de DB
       const mediaItems: MediaItem[] = [];
-      if (newMedia.length > 0 || selectedBoard?.properties) {
+      
+      // DEBUG: Ver qué hay en newMedia
+      console.log(`[DEBUG] Board: ${boardTitle}, newMedia.length: ${newMedia.length}`);
+      newMedia.forEach((m, i) => console.log(`[DEBUG] media[${i}]: type=${m.type}, content="${m.content}"`));
+      
+      // Solo mostrar título y contenido si hay media real (imágenes, videos, texto CON contenido, etc.)
+      // Filtrar elementos vacíos (párrafos vacíos de Notion)
+      const realMedia = newMedia.filter(m => {
+        // Si es texto, debe tener contenido no vacío
+        if (m.type === 'text') return m.content && m.content.trim().length > 0;
+        // Otros tipos (imagen, video, etc.) siempre cuentan
+        return true;
+      });
+      
+      console.log(`[DEBUG] realMedia.length (after filter): ${realMedia.length}`);
+      
+      const hasRealContent = realMedia.length > 0;
+      
+      console.log(`[DEBUG] hasRealContent: ${hasRealContent}`);
+      
+      if (hasRealContent) {
         mediaItems.push(createTitleCard(boardTitle, targetId, parentTitle));
         // Agregar card de propiedades si la página tiene propiedades (viene de DB)
         if (selectedBoard?.properties && selectedBoard.properties.length > 0) {
@@ -246,6 +266,9 @@ const App: React.FC = () => {
         }
         mediaItems.push(...newMedia);
       }
+      // Si no hay media real, mediaItems queda vacío y MasonryGrid mostrará el home
+      
+      console.log(`[DEBUG] mediaItems.length: ${mediaItems.length}`);
       
       const finalMedia = mediaItems;
 

@@ -86,6 +86,11 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     const point = info.point;
     const cards = containerRef.current.querySelectorAll('[data-card-id]');
     
+    // Validar que tenemos un punto válido
+    if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') {
+      return;
+    }
+    
     let closestId: string | null = null;
     let minDistance = Infinity;
 
@@ -94,6 +99,16 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
       if (id === draggedId) return;
 
       const rect = cardEl.getBoundingClientRect();
+      
+      // Verificar que el punto está dentro o cerca del área de la tarjeta
+      const isWithinBounds = 
+        point.x >= rect.left - 50 && 
+        point.x <= rect.right + 50 && 
+        point.y >= rect.top - 50 && 
+        point.y <= rect.bottom + 50;
+      
+      if (!isWithinBounds) return;
+      
       const cardCenter = {
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2
@@ -103,13 +118,15 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
       const dy = point.y - cardCenter.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Umbral más estricto para que solo se mueva cuando realmente estás "encima" de otra tarjeta
-      if (distance < minDistance && distance < rect.width * 1.2) {
+      // Umbral basado en el tamaño de la tarjeta para mejor precisión
+      const threshold = Math.min(rect.width, rect.height) * 0.8;
+      if (distance < minDistance && distance < threshold) {
         minDistance = distance;
         closestId = id;
       }
     });
 
+    // Solo reordenar si encontramos una tarjeta cercana válida
     if (closestId) {
       // Encontrar los índices en groupedItems
       const oldGroupIndex = groupedItems.findIndex(item => item.id === draggedId);
@@ -136,6 +153,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
         onReorder(newItems);
       }
     }
+    // Si no hay closestId, dragSnapToOrigin se encargará de devolver la tarjeta a su posición original
   };
 
   useEffect(() => {

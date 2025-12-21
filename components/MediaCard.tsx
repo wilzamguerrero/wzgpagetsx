@@ -176,20 +176,24 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
   const dragConfig = useMemo(() => ({
     drag: true as const,
     dragSnapToOrigin: true,
-    dragElastic: 0, 
+    dragElastic: 0.1, 
     dragMomentum: false,
+    dragListener: true,
     onDragStart: () => setIsDragging(true),
-    onDragEnd: (id: any, info: any) => {
-      setTimeout(() => setIsDragging(false), 30);
+    onDragEnd: (_event: any, info: any) => {
+      // Resetear inmediatamente para liberar el cursor
+      setIsDragging(false);
       if (onDragEnd) onDragEnd(item.id, info);
     },
     whileDrag: { 
       scale: 1.02,
       zIndex: 100,
       boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.8)",
-      opacity: 0.98
+      opacity: 0.98,
+      cursor: 'grabbing'
     },
-    transition: { type: "spring" as const, stiffness: 800, damping: 50, mass: 0.3 }
+    dragTransition: { bounceStiffness: 600, bounceDamping: 25 },
+    transition: { type: "spring" as const, stiffness: 600, damping: 30, mass: 0.4 }
   }), [item.id, onDragEnd]);
 
   const preventNativeDrag = (e: React.DragEvent | React.MouseEvent) => {
@@ -251,7 +255,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
       case 'youtube':
         const videoId = item.metadata?.videoId || '';
         return (
-          <div className="relative w-full bg-black overflow-hidden cursor-grab active:cursor-grabbing">
+          <div className="relative w-full bg-black overflow-hidden">
             <div className="relative w-full aspect-video">
               {!isLoaded && (
                 <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
@@ -261,11 +265,19 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={item.caption || 'YouTube video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isDragging ? 'pointer-events-none' : ''}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
+              {/* Capa de arrastre en la parte inferior - siempre visible para arrastrar */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-12 cursor-grab active:cursor-grabbing z-30"
+              />
+              {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
+              {isDragging && (
+                <div className="absolute inset-0 z-40 cursor-grabbing" />
+              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
           </div>
@@ -273,7 +285,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
       case 'loom':
         const loomVideoId = item.metadata?.videoId || '';
         return (
-          <div className="relative w-full bg-black overflow-hidden cursor-grab active:cursor-grabbing">
+          <div className="relative w-full bg-black overflow-hidden">
             <div className="relative w-full aspect-video">
               {!isLoaded && (
                 <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
@@ -283,11 +295,19 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
               <iframe
                 src={`https://www.loom.com/embed/${loomVideoId}`}
                 title={item.caption || 'Loom video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isDragging ? 'pointer-events-none' : ''}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
+              {/* Capa de arrastre en la parte inferior - siempre visible para arrastrar */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-12 cursor-grab active:cursor-grabbing z-30"
+              />
+              {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
+              {isDragging && (
+                <div className="absolute inset-0 z-40 cursor-grabbing" />
+              )}
             </div>
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
           </div>
@@ -521,20 +541,24 @@ export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es'
   const dragConfig = useMemo(() => ({
     drag: true as const,
     dragSnapToOrigin: true,
-    dragElastic: 0, 
+    dragElastic: 0.1, 
     dragMomentum: false,
+    dragListener: true,
     onDragStart: () => setIsDragging(true),
-    onDragEnd: (_: any, info: any) => {
-      setTimeout(() => setIsDragging(false), 30);
+    onDragEnd: (_event: any, info: any) => {
+      // Resetear inmediatamente para liberar el cursor
+      setIsDragging(false);
       if (onDragEnd) onDragEnd(groupId, info);
     },
     whileDrag: { 
       scale: 1.02,
       zIndex: 100,
       boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.8)",
-      opacity: 0.98
+      opacity: 0.98,
+      cursor: 'grabbing'
     },
-    transition: { type: "spring" as const, stiffness: 800, damping: 50, mass: 0.3 }
+    dragTransition: { bounceStiffness: 600, bounceDamping: 25 },
+    transition: { type: "spring" as const, stiffness: 600, damping: 30, mass: 0.4 }
   }), [groupId, onDragEnd]);
 
   const renderGroupItem = (item: MediaItem, index: number, allItems: MediaItem[]) => {
