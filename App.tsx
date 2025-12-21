@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY, SHOW_LOGS } from './services/notionService';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
@@ -7,25 +7,51 @@ import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
 
+// Obtener boardId inicial desde la URL
+const getInitialBoardId = (): string | null => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('board');
+};
+
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     isAuthenticated: true, 
     apiKey: NOTION_PORTFOLIO_KEY,
     rootPageId: ROOT_PAGE_ID,
     boards: [], 
-    activeBoardId: null,
+    activeBoardId: getInitialBoardId(),
     media: [],
     isLoading: true,
     error: null,
     isDemoMode: false,
     language: 'es',
   });
+  
+  // Flag para evitar pushState cuando navegamos con popstate
+  const isNavigatingRef = useRef(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [columnCount, setColumnCount] = useState(4);
   const notionServiceRef = useRef<NotionService | null>(null);
   
   const strings = t(state.language);
+
+  // Actualizar URL sin recargar la página
+  const updateUrl = useCallback((boardId: string | null) => {
+    if (isNavigatingRef.current) return;
+    
+    const url = new URL(window.location.href);
+    if (boardId) {
+      url.searchParams.set('board', boardId);
+    } else {
+      url.searchParams.delete('board');
+    }
+    
+    const selectedBoard = state.boards.find(b => b.id === boardId);
+    const title = selectedBoard?.title || 'Portfolio';
+    
+    window.history.pushState({ boardId }, title, url.toString());
+  }, [state.boards]);
 
   const autoLoadDatabases = async (service: NotionService, currentBoards: Board[], forceRefresh = false) => {
     if (SHOW_DATABASE_NAMES) return currentBoards;
@@ -123,7 +149,14 @@ const App: React.FC = () => {
         const service = new NotionService(NOTION_PORTFOLIO_KEY);
         notionServiceRef.current = service;
         const { boards, media } = await loadRootContent(service, true);
+        
+        // Si hay un boardId inicial en la URL, cargar ese board después de tener los boards
+        const initialBoardId = getInitialBoardId();
         setState(prev => ({ ...prev, boards, media, isLoading: false, error: null }));
+        
+        // Establecer el estado inicial del historial
+        window.history.replaceState({ boardId: initialBoardId }, '', window.location.href);
+        
       } catch (err: any) {
         console.error('[App] Init error:', err);
         setState(prev => ({ ...prev, isLoading: false, error: `Error: ${err.message}` }));
@@ -131,6 +164,41 @@ const App: React.FC = () => {
     };
     initApp();
   }, []);
+
+  // Cargar el board inicial desde la URL después de que los boards estén disponibles
+  useEffect(() => {
+    const initialBoardId = getInitialBoardId();
+    if (initialBoardId && state.boards.length > 0 && !state.isLoading && state.activeBoardId === initialBoardId) {
+      // Cargar el contenido del board inicial
+      isNavigatingRef.current = true;
+      handleSelectBoard(initialBoardId, false).finally(() => {
+        isNavigatingRef.current = false;
+      });
+    }
+  }, [state.boards.length]);
+
+  // Escuchar navegación con flechas del navegador (back/forward)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const boardId = event.state?.boardId ?? null;
+      isNavigatingRef.current = true;
+      
+      if (boardId === null) {
+        // Ir a home
+        handleGoHome().finally(() => {
+          isNavigatingRef.current = false;
+        });
+      } else {
+        // Ir al board específico
+        handleSelectBoard(boardId, false).finally(() => {
+          isNavigatingRef.current = false;
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [state.boards]);
 
   const handleSelectBoard = async (boardId: string | null, forceRefresh = true) => {
     const targetId = boardId || state.rootPageId;
@@ -213,6 +281,10 @@ const App: React.FC = () => {
               isLoading: false
           };
       });
+      
+      // Actualizar URL para navegación con historial
+      updateUrl(boardId);
+      
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } catch (err: any) {
       console.error('[App] Select board error:', err);
@@ -222,6 +294,9 @@ const App: React.FC = () => {
 
   const handleGoHome = async () => {
     setState(prev => ({ ...prev, activeBoardId: null, isLoading: true }));
+    
+    // Actualizar URL para navegación con historial
+    updateUrl(null);
     
     if (notionServiceRef.current) {
       try {
