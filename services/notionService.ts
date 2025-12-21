@@ -389,6 +389,18 @@ export class NotionService {
             videoId = videoUrl.split('youtube.com/embed/')[1]?.split('?')[0] || '';
           }
           metadata = { videoId };
+        } else if (videoUrl.includes('loom.com')) {
+          // Detectar si es un video de Loom
+          type = 'loom';
+          url = videoUrl;
+          caption = block.video?.caption?.map((t: any) => t.plain_text).join('') || '';
+          let videoId = '';
+          if (videoUrl.includes('/share/')) {
+            videoId = videoUrl.split('/share/')[1]?.split('?')[0] || '';
+          } else if (videoUrl.includes('/embed/')) {
+            videoId = videoUrl.split('/embed/')[1]?.split('?')[0] || '';
+          }
+          metadata = { videoId };
         } else {
           type = 'video';
           url = videoUrl;
@@ -438,6 +450,19 @@ export class NotionService {
             videoId = urlParams.get('v') || '';
           } else if (embedUrl.includes('youtube.com/embed/')) {
             videoId = embedUrl.split('youtube.com/embed/')[1]?.split('?')[0] || '';
+          }
+          metadata = { videoId };
+        } else if (embedUrl.includes('loom.com')) {
+          // Detectar si es un embed de Loom
+          type = 'loom';
+          url = embedUrl;
+          caption = block.embed?.caption?.map((t: any) => t.plain_text).join('') || '';
+          // Extraer el ID del video de Loom (formato: loom.com/share/VIDEO_ID)
+          let videoId = '';
+          if (embedUrl.includes('/share/')) {
+            videoId = embedUrl.split('/share/')[1]?.split('?')[0] || '';
+          } else if (embedUrl.includes('/embed/')) {
+            videoId = embedUrl.split('/embed/')[1]?.split('?')[0] || '';
           }
           metadata = { videoId };
         }

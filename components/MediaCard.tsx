@@ -306,6 +306,64 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
             )}
           </div>
         );
+      case 'loom':
+        const loomVideoId = item.metadata?.videoId || '';
+        return (
+          <div className="relative w-full bg-black overflow-hidden">
+            <div className="relative w-full aspect-video">
+              {!isLoaded && (
+                <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
+                  <Play className="w-12 h-12 text-purple-500/50" />
+                </div>
+              )}
+              <iframe
+                src={`https://www.loom.com/embed/${loomVideoId}`}
+                title={item.caption || 'Loom video'}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isInteracting ? '' : 'pointer-events-none'}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onLoad={() => setIsLoaded(true)}
+              />
+              {/* Overlay para permitir drag */}
+              {!isInteracting && (
+                <div 
+                  className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing flex items-center justify-center bg-transparent hover:bg-black/10 transition-colors"
+                  onClick={(e) => {
+                    if (!isDragging) {
+                      e.stopPropagation();
+                      setIsInteracting(true);
+                    }
+                  }}
+                >
+                  <div className="bg-black/60 p-4 rounded-full backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              )}
+              {/* Botón para volver al modo arrastrable */}
+              {isInteracting && (
+                <button
+                  className="absolute top-2 right-2 z-20 bg-black/70 hover:bg-black/90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsInteracting(false);
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {item.caption && (
+              <div className="p-3 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4 text-purple-500 shrink-0" />
+                  <p className="text-white text-xs font-medium line-clamp-1">{item.caption}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
       case 'image':
         return (
           <div 
