@@ -136,10 +136,20 @@ interface MediaCardProps {
   item: MediaItem;
   onDragEnd?: (id: string, info: any) => void;
   index?: number;
+  orderIndex?: number; // Número de orden basado en Notion
   language?: Language;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language = 'es' }) => {
+// Componente para el badge de orden
+const OrderBadge: React.FC<{ index: number }> = ({ index }) => (
+  <div className="absolute top-0 left-2 z-50 opacity-20 group-hover:opacity-100 transition-opacity duration-300">
+    <span className="text-[10px] font-mono font-bold text-emerald-400/60 group-hover:text-emerald-400 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm transition-all">
+      {index}
+    </span>
+  </div>
+);
+
+export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderIndex, language = 'es' }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
@@ -517,6 +527,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, language 
       {...dragConfig}
       className={cardWrapperClasses}
     >
+      {orderIndex !== undefined && <OrderBadge index={orderIndex} />}
       {renderContent()}
     </motion.div>
   );
@@ -530,10 +541,11 @@ interface GroupedCardProps {
   items: MediaItem[];
   language?: Language;
   groupId: string;
+  orderIndex?: number; // Número de orden basado en Notion
   onDragEnd?: (id: string, info: any) => void;
 }
 
-export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId, onDragEnd }) => {
+export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId, orderIndex, onDragEnd }) => {
   const [isDragging, setIsDragging] = useState(false);
   
   const cardWrapperClasses = "group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black cursor-grab active:cursor-grabbing select-none touch-none transition-colors duration-300 hover:border-white/10";
@@ -682,6 +694,7 @@ export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es'
       {...dragConfig}
       className={cardWrapperClasses}
     >
+      {orderIndex !== undefined && <OrderBadge index={orderIndex} />}
       <div className="pb-4">
         {items.map((item, index) => renderGroupItem(item, index, items))}
       </div>

@@ -161,6 +161,19 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     return cols;
   }, [displayItems, columnCount]);
 
+  // Crear mapa de orden basado en groupedItems (orden de Notion después de agrupar)
+  // El número representa la posición del grupo/card en el orden de lectura de Notion
+  const orderIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    
+    // Asignar índice secuencial a cada grupo/item según su posición en groupedItems
+    groupedItems.forEach((groupedItem, idx) => {
+      map.set(groupedItem.id, idx + 1); // Empezar desde 1
+    });
+    
+    return map;
+  }, [groupedItems]);
+
   const handleDragEnd = (draggedId: string, info: any) => {
     if (!onReorder || !containerRef.current) return;
 
@@ -334,10 +347,11 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
                     items={item.groupItems} 
                     language={language} 
                     groupId={item.id}
+                    orderIndex={orderIndexMap.get(item.id)}
                     onDragEnd={handleDragEnd}
                   />
                 ) : (
-                  <MediaCard item={item} onDragEnd={handleDragEnd} language={language} />
+                  <MediaCard item={item} onDragEnd={handleDragEnd} orderIndex={orderIndexMap.get(item.id)} language={language} />
                 )}
               </motion.div>
             ))}
