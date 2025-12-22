@@ -257,7 +257,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
                     </div>
                 )}
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {/* Barra de arrastre - solo esta zona permite arrastrar (barra + 4px arriba) */}
+            <div className="absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
             {item.caption && (
                 <div className="absolute bottom-0 left-0 w-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-gradient-to-t from-black/80 to-transparent pointer-events-none pb-6">
                     <p className="text-white text-xs font-medium line-clamp-2">{item.caption}</p>
@@ -283,16 +285,14 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Capa de arrastre en la parte inferior - siempre visible para arrastrar */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-12 cursor-grab active:cursor-grabbing z-30"
-              />
               {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
               {isDragging && (
                 <div className="absolute inset-0 z-40 cursor-grabbing" />
               )}
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {/* Barra de arrastre - solo esta zona permite arrastrar (barra + 4px arriba) */}
+            <div className="absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
           </div>
         );
       case 'loom':
@@ -313,16 +313,14 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Capa de arrastre en la parte inferior - siempre visible para arrastrar */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-12 cursor-grab active:cursor-grabbing z-30"
-              />
               {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
               {isDragging && (
                 <div className="absolute inset-0 z-40 cursor-grabbing" />
               )}
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20" />
+            {/* Barra de arrastre - solo esta zona permite arrastrar (barra + 4px arriba) */}
+            <div className="absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
           </div>
         );
       case 'canva':
