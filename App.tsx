@@ -28,7 +28,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Detectar si es móvil para columnas por defecto
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const [columnCount, setColumnCount] = useState(isMobile ? 2 : 4);
+  const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const notionServiceRef = useRef<NotionService | null>(null);
   
