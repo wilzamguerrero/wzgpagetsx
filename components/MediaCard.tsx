@@ -181,14 +181,17 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
       }
   };
 
-  const cardWrapperClasses = "group relative w-full rounded-2xl overflow-hidden bg-surface shadow-md border border-black cursor-grab active:cursor-grabbing select-none touch-none transition-colors duration-300 hover:border-white/10";
+  // Detectar si es móvil/touch para deshabilitar drag
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  
+  const cardWrapperClasses = `group relative w-full rounded-2xl overflow-hidden bg-surface shadow-md border border-black ${isTouchDevice ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} select-none ${isTouchDevice ? '' : 'touch-none'} transition-colors duration-300 hover:border-white/10`;
 
   const dragConfig = useMemo(() => ({
-    drag: true as const,
+    drag: isTouchDevice ? false : true as const,
     dragSnapToOrigin: true,
     dragElastic: 0.1, 
     dragMomentum: false,
-    dragListener: true,
+    dragListener: !isTouchDevice,
     onDragStart: () => setIsDragging(true),
     onDragEnd: (_event: any, info: any) => {
       // Resetear inmediatamente para liberar el cursor
@@ -548,14 +551,17 @@ interface GroupedCardProps {
 export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId, orderIndex, onDragEnd }) => {
   const [isDragging, setIsDragging] = useState(false);
   
-  const cardWrapperClasses = "group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black cursor-grab active:cursor-grabbing select-none touch-none transition-colors duration-300 hover:border-white/10";
+  // Detectar si es móvil/touch para deshabilitar drag
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  
+  const cardWrapperClasses = `group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black ${isTouchDevice ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} select-none ${isTouchDevice ? '' : 'touch-none'} transition-colors duration-300 hover:border-white/10`;
 
   const dragConfig = useMemo(() => ({
-    drag: true as const,
+    drag: isTouchDevice ? false : true as const,
     dragSnapToOrigin: true,
     dragElastic: 0.1, 
     dragMomentum: false,
-    dragListener: true,
+    dragListener: !isTouchDevice,
     onDragStart: () => setIsDragging(true),
     onDragEnd: (_event: any, info: any) => {
       // Resetear inmediatamente para liberar el cursor

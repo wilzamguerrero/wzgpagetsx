@@ -26,7 +26,9 @@ const App: React.FC = () => {
   const isNavigatingRef = useRef(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [columnCount, setColumnCount] = useState(4);
+  // Detectar si es móvil para columnas por defecto
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [columnCount, setColumnCount] = useState(isMobile ? 2 : 4);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const notionServiceRef = useRef<NotionService | null>(null);
   
@@ -286,8 +288,6 @@ const App: React.FC = () => {
       
       // Actualizar URL para navegación con historial
       updateUrl(boardId);
-      
-      if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } catch (err: any) {
       setState(prev => ({ ...prev, isLoading: false, error: 'Failed to load content.' }));
     }
