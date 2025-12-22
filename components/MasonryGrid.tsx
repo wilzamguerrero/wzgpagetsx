@@ -286,9 +286,13 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     if (!containerRef.current) return;
 
     if (!galleryInstanceRef.current && items.length > 0) {
-      // Temporalmente silenciar console.log para evitar el warning de licencia de lightGallery
+      // Silenciar console.log globalmente para evitar warnings de librerías
       const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
       console.log = () => {};
+      console.warn = () => {};
+      console.error = () => {};
       
       galleryInstanceRef.current = lightGallery(containerRef.current, {
           selector: '.gallery-item', 
@@ -300,8 +304,10 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
           mobileSettings: { controls: false, showCloseIcon: true, download: false }
       });
       
-      // Restaurar console.log
+      // Restaurar console
       console.log = originalLog;
+      console.warn = originalWarn;
+      console.error = originalError;
     } else if (galleryInstanceRef.current) {
       galleryInstanceRef.current.refresh();
     }

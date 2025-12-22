@@ -73,8 +73,6 @@ export class NotionService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[NotionService] Error ${response.status}:`, errorText);
       throw new Error(`Notion API error (${response.status})`);
     }
     
@@ -330,7 +328,6 @@ export class NotionService {
       }
       return { icon };
     } catch (e) {
-      console.error(`[NotionService] Error getting page info for ${cleanId}:`, e);
       return {};
     }
   }

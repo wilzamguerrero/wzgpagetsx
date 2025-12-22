@@ -161,7 +161,6 @@ const App: React.FC = () => {
         window.history.replaceState({ boardId: null }, 'Portfolio', url.toString());
         
       } catch (err: any) {
-        console.error('[App] Init error:', err);
         setState(prev => ({ ...prev, isLoading: false, error: `Error: ${err.message}` }));
       }
     };
@@ -247,10 +246,6 @@ const App: React.FC = () => {
       // Construir media final con título y propiedades si es página de DB
       const mediaItems: MediaItem[] = [];
       
-      // DEBUG: Ver qué hay en newMedia
-      console.log(`[DEBUG] Board: ${boardTitle}, newMedia.length: ${newMedia.length}`);
-      newMedia.forEach((m, i) => console.log(`[DEBUG] media[${i}]: type=${m.type}, content="${m.content}"`));
-      
       // Solo mostrar título y contenido si hay media real (imágenes, videos, texto CON contenido, etc.)
       // Filtrar elementos vacíos (párrafos vacíos de Notion)
       const realMedia = newMedia.filter(m => {
@@ -260,11 +255,7 @@ const App: React.FC = () => {
         return true;
       });
       
-      console.log(`[DEBUG] realMedia.length (after filter): ${realMedia.length}`);
-      
       const hasRealContent = realMedia.length > 0;
-      
-      console.log(`[DEBUG] hasRealContent: ${hasRealContent}`);
       
       if (hasRealContent) {
         mediaItems.push(createTitleCard(boardTitle, targetId, parentTitle));
@@ -275,8 +266,6 @@ const App: React.FC = () => {
         mediaItems.push(...newMedia);
       }
       // Si no hay media real, mediaItems queda vacío y MasonryGrid mostrará el home
-      
-      console.log(`[DEBUG] mediaItems.length: ${mediaItems.length}`);
       
       const finalMedia = mediaItems;
 
@@ -300,7 +289,6 @@ const App: React.FC = () => {
       
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } catch (err: any) {
-      console.error('[App] Select board error:', err);
       setState(prev => ({ ...prev, isLoading: false, error: 'Failed to load content.' }));
     }
   };
