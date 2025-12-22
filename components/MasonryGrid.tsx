@@ -46,12 +46,32 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   const [isShuffling, setIsShuffling] = useState(false);
   const shuffleTimeoutRef = useRef<number>();
   const shuffleIntervalRef = useRef<number>();
+  
+  // Guardar el orden original de Notion (solo se establece una vez por página)
+  const originalOrderRef = useRef<Map<string, number>>(new Map());
+  const lastParentIdRef = useRef<string | null>(null);
 
   // Agrupar items para mejor orden de lectura y numerar listas
   const groupedItems = useMemo(() => {
     const numbered = numberListItems(items);
     return groupContentForReading(numbered);
   }, [items]);
+  
+  // Detectar si es una nueva página (basado en parentId del primer item)
+  const currentParentId = items.length > 0 ? items[0].parentId : null;
+  
+  // Establecer el orden original solo cuando cambia la página (no cuando se reordenan items)
+  useEffect(() => {
+    if (currentParentId && currentParentId !== lastParentIdRef.current) {
+      // Nueva página - guardar el orden original
+      const map = new Map<string, number>();
+      groupedItems.forEach((groupedItem, idx) => {
+        map.set(groupedItem.id, idx + 1);
+      });
+      originalOrderRef.current = map;
+      lastParentIdRef.current = currentParentId;
+    }
+  }, [currentParentId, groupedItems]);
 
   // Reset shuffle order when items change (navigating to another page)
   useEffect(() => {
@@ -161,18 +181,8 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     return cols;
   }, [displayItems, columnCount]);
 
-  // Crear mapa de orden basado en groupedItems (orden de Notion después de agrupar)
-  // El número representa la posición del grupo/card en el orden de lectura de Notion
-  const orderIndexMap = useMemo(() => {
-    const map = new Map<string, number>();
-    
-    // Asignar índice secuencial a cada grupo/item según su posición en groupedItems
-    groupedItems.forEach((groupedItem, idx) => {
-      map.set(groupedItem.id, idx + 1); // Empezar desde 1
-    });
-    
-    return map;
-  }, [groupedItems]);
+  // Usar el orden original guardado en el ref (no cambia con reordenamientos)
+  const orderIndexMap = originalOrderRef.current;
 
   const handleDragEnd = (draggedId: string, info: any) => {
     if (!onReorder || !containerRef.current) return;
@@ -233,8 +243,30 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
         newGroupedItems.splice(targetGroupIndex, 0, movedItem);
         
         // Expandir los grupos a items originales para pasar a onReorder
+        // IMPORTANTE: Insertar separadores vacíos entre grupos para evitar que se mezclen
         const newItems: MediaItem[] = [];
-        for (const groupedItem of newGroupedItems) {
+        for (let i = 0; i < newGroupedItems.length; i++) {
+          const groupedItem = newGroupedItems[i];
+          
+          // Insertar separador vacío antes de cada grupo (excepto el primero)
+          // para asegurar que los grupos no se mezclen al reagrupar
+          if (i > 0) {
+            const prevItem = newGroupedItems[i - 1];
+            const currentIsStandalone = !groupedItem.isGroup;
+            const prevIsStandalone = !prevItem.isGroup;
+            
+            // Solo insertar separador si al menos uno NO es standalone
+            // (los standalone ya van solos por definición)
+            if (!currentIsStandalone || !prevIsStandalone) {
+              newItems.push({
+                id: `separator-${i}-${Date.now()}`,
+                type: 'text',
+                content: '',
+                parentId: groupedItem.parentId
+              });
+            }
+          }
+          
           if (groupedItem.isGroup && groupedItem.groupItems) {
             // Es un grupo - añadir todos sus items
             newItems.push(...groupedItem.groupItems);
