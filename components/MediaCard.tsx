@@ -329,13 +329,15 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
         let canvaEmbedSrc = canvaOriginalUrl;
         
         // Si la URL contiene /design/, convertir a formato embed
+        // Formato: https://www.canva.com/design/DESIGN_ID/SHARE_KEY/view
         if (canvaOriginalUrl.includes('/design/')) {
-          // Extraer el ID del diseño
-          const designMatch = canvaOriginalUrl.match(/\/design\/([^\/]+)/);
-          if (designMatch && designMatch[1]) {
+          // Extraer el ID del diseño Y la clave de compartir (ambos son necesarios)
+          const designMatch = canvaOriginalUrl.match(/\/design\/([^\/]+)\/([^\/]+)/);
+          if (designMatch && designMatch[1] && designMatch[2]) {
             const designId = designMatch[1];
-            // Formato embed de Canva: https://www.canva.com/design/DESIGN_ID/view?embed
-            canvaEmbedSrc = `https://www.canva.com/design/${designId}/view?embed`;
+            const shareKey = designMatch[2];
+            // Formato embed de Canva: https://www.canva.com/design/DESIGN_ID/SHARE_KEY/view?embed
+            canvaEmbedSrc = `https://www.canva.com/design/${designId}/${shareKey}/view?embed`;
           }
         }
         
