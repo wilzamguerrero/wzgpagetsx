@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const notionServiceRef = useRef<NotionService | null>(null);
+  const hasPreloadedRef = useRef(false);
   
   const strings = t(state.language);
 
@@ -152,7 +153,23 @@ const App: React.FC = () => {
       try {
         const service = new NotionService(NOTION_PORTFOLIO_KEY);
         notionServiceRef.current = service;
+        
+        // Cargar boards cacheados de localStorage para sidebar instantáneo
+        const cachedBoards = localStorage.getItem('cached_sidebar_boards');
+        if (cachedBoards) {
+          try {
+            const parsed = JSON.parse(cachedBoards) as Board[];
+            if (parsed.length > 0) {
+              setState(prev => ({ ...prev, boards: parsed }));
+              if (SHOW_LOGS) console.log(`[App] Loaded ${parsed.length} cached boards for instant sidebar`);
+            }
+          } catch (e) { /* cache corrupto, ignorar */ }
+        }
+        
         const { boards } = await loadRootContent(service, true);
+        
+        // Guardar boards en localStorage para la próxima visita
+        try { localStorage.setItem('cached_sidebar_boards', JSON.stringify(boards)); } catch (e) {}
         
         // Home siempre empieza con media vacío para mostrar logo y frases
         setState(prev => ({ ...prev, boards, media: [], isLoading: false, error: null }));
@@ -168,6 +185,83 @@ const App: React.FC = () => {
     };
     initApp();
   }, []);
+
+  // Precargar todos los sub-boards en background para que el sidebar sea instantáneo
+  useEffect(() => {
+    if (hasPreloadedRef.current || state.isLoading || state.boards.length === 0 || !notionServiceRef.current) return;
+    hasPreloadedRef.current = true;
+
+    const preloadAllBoards = async () => {
+      const service = notionServiceRef.current!;
+      let allBoards = [...state.boards];
+      let maxIterations = 10; // Límite de seguridad
+
+      while (maxIterations-- > 0) {
+        const unloaded = allBoards.filter(b => b.hasChildren && !b.isLoaded);
+        if (unloaded.length === 0) break;
+
+        try {
+          const results = await Promise.allSettled(
+            unloaded.map(async (board) => {
+              let children: Board[];
+              if (board.type === 'database') {
+                children = await service.queryDatabase(board.id);
+              } else {
+                const blocks = await service.getBlockChildren(board.id);
+                const deepBlocks = await service.getDeepBlockChildren(blocks);
+                children = service.extractBoards(deepBlocks, board.id);
+                children = await service.enrichBoardsWithIcons(children);
+              }
+              return { parentId: board.id, children };
+            })
+          );
+
+          let newChildren: Board[] = [];
+          const loadedParentIds = new Set<string>();
+
+          for (const result of results) {
+            if (result.status === 'fulfilled') {
+              loadedParentIds.add(result.value.parentId);
+              newChildren.push(...result.value.children);
+            }
+          }
+
+          // Marcar padres como cargados
+          allBoards = allBoards.map(b => loadedParentIds.has(b.id) ? { ...b, isLoaded: true } : b);
+
+          // Agregar hijos nuevos (evitar duplicados)
+          const existingIds = new Set(allBoards.map(b => b.id));
+          const uniqueNew = newChildren.filter(b => !existingIds.has(b.id));
+          allBoards = [...allBoards, ...uniqueNew];
+
+          // Auto-cargar databases
+          allBoards = await autoLoadDatabases(service, allBoards);
+
+          if (uniqueNew.length === 0) break;
+        } catch (e) {
+          if (SHOW_LOGS) console.log('[App] Preload error:', e);
+          break;
+        }
+      }
+
+      // Actualizar estado con todos los boards precargados
+      setState(prev => {
+        const existingIds = new Set(prev.boards.map(b => b.id));
+        const newOnes = allBoards.filter(b => !existingIds.has(b.id));
+        const loadedMap = new Map(allBoards.filter(b => b.isLoaded).map(b => [b.id, true]));
+        const updatedExisting = prev.boards.map(b => loadedMap.has(b.id) ? { ...b, isLoaded: true } : b);
+        const finalBoards = [...updatedExisting, ...newOnes];
+        
+        // Actualizar cache de localStorage con el árbol completo
+        try { localStorage.setItem('cached_sidebar_boards', JSON.stringify(finalBoards)); } catch (e) {}
+        
+        if (SHOW_LOGS) console.log(`[App] Preloaded complete tree: ${finalBoards.length} total boards`);
+        return { ...prev, boards: finalBoards };
+      });
+    };
+
+    preloadAllBoards();
+  }, [state.isLoading, state.boards.length]);
 
   // Escuchar navegación con flechas del navegador (back/forward)
   useEffect(() => {
