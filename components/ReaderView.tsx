@@ -17,10 +17,21 @@ const ACCENT_VAR = 'var(--reader-accent, #00ffcb)';
 const withAlpha = (_accent: string, alpha: number): string =>
   `color-mix(in srgb, ${ACCENT_VAR} ${Math.round(alpha * 100)}%, transparent)`;
 
+// Convierte una URL de Canva a su formato embebible (?embed), igual que en el
+// modo columnas; si no, Canva responde "refused to connect".
+const toCanvaEmbed = (url: string): string => {
+  if (!url) return '';
+  if (url.includes('/design/')) {
+    const m = url.match(/\/design\/([^/]+)\/([^/]+)/);
+    if (m && m[1] && m[2]) return `https://www.canva.com/design/${m[1]}/${m[2]}/view?embed`;
+  }
+  return url;
+};
+
 export const ReaderView: React.FC<ReaderViewProps> = ({ items, language }) => {
   const accent = ACCENT_VAR;
 
-  // Numerar las secciones (headings) al estilo motion.dev: 01, 02, 03...
+  // Numerar las secciones (encabezados) al estilo motion.dev: 01, 02, 03...
   const rows = useMemo(() => {
     let section = 0;
     return items
@@ -28,7 +39,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ items, language }) => {
       .map((it) => {
         if (it.type === 'heading') {
           section += 1;
-          return { it, no: section };
+          return { it, no: section as number | undefined };
         }
         return { it, no: undefined as number | undefined };
       });
@@ -246,7 +257,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ items, language }) => {
         return (
           <div className="my-10 -mx-2 md:-mx-8 relative overflow-hidden rounded-2xl bg-black aspect-square">
             <iframe
-              src={item.url || ''}
+              src={toCanvaEmbed(item.url || item.metadata?.url || '')}
               title={item.caption || 'Canva'}
               className="absolute inset-0 w-full h-full"
               allowFullScreen

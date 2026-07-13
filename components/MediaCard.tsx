@@ -142,8 +142,11 @@ interface MediaCardProps {
 
 // Componente para el badge de orden
 const OrderBadge: React.FC<{ index: number }> = ({ index }) => (
-  <div className="absolute top-0 left-2 z-50 opacity-20 group-hover:opacity-100 transition-opacity duration-300">
-    <span className="text-[10px] font-mono font-bold text-emerald-400/60 group-hover:text-emerald-400 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm transition-all">
+  <div className="absolute top-0 left-2 z-50 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
+    <span
+      className="text-[10px] font-mono font-bold bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm transition-all"
+      style={{ color: 'var(--reader-accent, #00ffcb)' }}
+    >
       {index}
     </span>
   </div>
