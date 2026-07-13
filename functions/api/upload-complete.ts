@@ -8,7 +8,7 @@ import { json, getSecret, type Env, NOTION_VERSION, NOTION_BASE } from "../_shar
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const notionSecret = getSecret(context.env);
   if (!notionSecret) {
-    return json({ error: "Notion no está configurado." }, 400);
+    return json({ error: "El servicio no está configurado." }, 400);
   }
 
   let body: { uploadId?: string };
@@ -37,7 +37,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (!completeRes.ok) {
       const errText = await completeRes.text();
-      throw new Error(`Notion rechazó el complete: ${completeRes.status} - ${errText}`);
+      throw new Error(`El servidor rechazó la finalización: ${completeRes.status} - ${errText}`);
     }
 
     const result = (await completeRes.json()) as any;

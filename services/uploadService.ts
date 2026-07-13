@@ -196,7 +196,7 @@ const uploadOneFile = async (
         const res = await fetch("/api/upload-file", { method: "POST", body: fd });
         if (isThrottleStatus(res.status)) {
           outcome = "throttle";
-          throw new Error(`Notion saturado al subir "${originalName}" (${res.status}).`);
+          throw new Error(`Servidor ocupado al subir "${originalName}" (${res.status}).`);
         }
         const text = await res.text();
         let parsed: any;
@@ -267,7 +267,7 @@ const uploadOneFile = async (
         });
         if (isThrottleStatus(partRes.status)) {
           outcome = "throttle";
-          throw new Error(`Notion saturado en parte ${partNumber} de "${originalName}" (${partRes.status}).`);
+          throw new Error(`Servidor ocupado en parte ${partNumber} de "${originalName}" (${partRes.status}).`);
         }
         const partText = await partRes.text();
         let partData: any;
@@ -348,7 +348,7 @@ export const submitContact = async (
     await Promise.all(Array.from({ length: filePool }, () => worker()));
   }
 
-  onStep?.("Enviando a Notion...");
+  onStep?.("Enviando...");
 
   const res = await fetch("/api/contact-submit", {
     method: "POST",
@@ -357,7 +357,7 @@ export const submitContact = async (
   });
   const data = await res.json();
   if (!res.ok || !data.success) {
-    throw new Error(data.error || "Error al enviar el formulario a Notion.");
+    throw new Error(data.error || "Error al enviar el formulario.");
   }
 
   return { count: data.count };

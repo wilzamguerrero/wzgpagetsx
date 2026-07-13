@@ -10,7 +10,7 @@ import { json, getSecret, type Env, NOTION_VERSION, NOTION_BASE, resolveUploadMe
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const notionSecret = getSecret(context.env);
   if (!notionSecret) {
-    return json({ error: "Notion no está configurado." }, 400);
+    return json({ error: "El servicio no está configurado." }, 400);
   }
 
   let body: { filename?: string; mimeType?: string; fileSize?: number };
@@ -31,7 +31,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB (límite de Notion)
 
   if (fileSize > MAX_FILE_SIZE) {
-    return json({ error: `El archivo excede el límite de 5 GB de Notion.` }, 413);
+    return json({ error: `El archivo excede el límite de 5 GB.` }, 413);
   }
 
   const { uploadName, contentType } = resolveUploadMeta(filename, mimeType);

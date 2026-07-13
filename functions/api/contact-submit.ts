@@ -89,12 +89,12 @@ const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const notionSecret = getSecret(context.env);
   if (!notionSecret) {
-    return json({ error: "Notion no está configurado." }, 400);
+    return json({ error: "El servicio de envío no está configurado." }, 400);
   }
 
   const pageId = cleanNotionId((context.env.CONTACT_PAGE_ID as string) || "");
   if (!pageId) {
-    return json({ error: "Falta CONTACT_PAGE_ID en el servidor." }, 500);
+    return json({ error: "El destino de envío no está configurado." }, 500);
   }
 
   let body: { fields?: ContactFields; fileRecords?: FileRecord[] };
@@ -153,7 +153,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       toggle: { rich_text: [rt(`📩 ${fullName} — ${dateStr}`, { bold: true })] },
     };
     const [createdToggle] = await appendChildren(pageId, [toggle]);
-    if (!createdToggle?.id) throw new Error("No se pudo crear el envío en Notion.");
+    if (!createdToggle?.id) throw new Error("No se pudo registrar el envío.");
 
     // 2. Rellenar el toggle con la info del formulario y los archivos.
     const children: any[] = [
@@ -185,7 +185,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ success: true, count: fileRecords.length });
   } catch (err: any) {
     return json(
-      { error: `Error al guardar el envío en Notion: ${err.message || "Error desconocido"}` },
+      { error: `Error al guardar el envío: ${err.message || "Error desconocido"}` },
       500
     );
   }

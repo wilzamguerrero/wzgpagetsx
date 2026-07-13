@@ -11,7 +11,7 @@ const MAX_FILE_SIZE = 95 * 1024 * 1024;
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const notionSecret = getSecret(context.env);
   if (!notionSecret) {
-    return json({ error: "Notion no está configurado." }, 400);
+    return json({ error: "El servicio no está configurado." }, 400);
   }
 
   let formData: FormData;
@@ -64,7 +64,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
     const sent = (await sendRes.json()) as any;
     if (sent.status !== "uploaded" && sent.status !== "complete") {
-      throw new Error(`Error al enviar archivo a Notion: ${JSON.stringify(sent)}`);
+      throw new Error(`Error al enviar el archivo: ${JSON.stringify(sent)}`);
     }
 
     return json({

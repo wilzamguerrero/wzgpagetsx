@@ -9,7 +9,7 @@ import { json, getSecret, type Env, NOTION_VERSION, NOTION_BASE } from "../_shar
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const notionSecret = getSecret(context.env);
   if (!notionSecret) {
-    return json({ error: "Notion no está configurado." }, 400);
+    return json({ error: "El servicio no está configurado." }, 400);
   }
 
   const url = new URL(context.request.url);
@@ -42,7 +42,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       // Errores transitorios de Notion como 503 para que el navegador reintente.
       const transient = [429, 500, 502, 503, 504, 529].includes(sendRes.status);
       return json(
-        { error: `Notion rechazó el chunk: ${sendRes.status} - ${errText}` },
+        { error: `El servidor rechazó el fragmento: ${sendRes.status} - ${errText}` },
         transient ? 503 : 502
       );
     }
