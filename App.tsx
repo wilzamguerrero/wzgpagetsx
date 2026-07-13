@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
 import { GlitchOverlay } from './components/GlitchOverlay';
 import { ContactPanel } from './components/ContactPanel';
+import { BackgroundParticles } from './components/BackgroundParticles';
 import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
@@ -524,8 +525,13 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, media: reverseContent(prev.media) }));
   };
 
+  // Icono de la página activa para las partículas de fondo.
+  const activeIcon = state.boards.find(b => b.id === state.activeBoardId)?.icon;
+
   return (
     <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
+      {/* Iconos flotantes de fondo (usa el icono de la página actual) */}
+      <BackgroundParticles icon={activeIcon} fadeColor="#0f0f0f" />
       {/* Glitch overlay with chromatic aberration - only when effects enabled */}
       <GlitchOverlay isActive={isSidebarOpen && effectsEnabled} />
       {isSidebarOpen && (
@@ -555,7 +561,7 @@ const App: React.FC = () => {
         onToggleOrder={handleToggleOrder}
         onOpenContact={() => setIsContactOpen(true)}
       />
-      <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
+      <main className={`relative z-10 flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
         {state.error && (
             <div className="mx-auto mt-10 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 max-w-2xl text-center">
                 <p className="font-bold">{strings.errorTitle}</p>

@@ -488,6 +488,75 @@
           filter: brightness(1);
         }
       }
+
+      /* ====== FONDO: ICONOS FLOTANTES (basado en el efecto de UpZ) ====== */
+      .bg-particles {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      /* Difuminado arriba y abajo para que las partículas se fundan con el fondo */
+      .bg-particles::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 55vh;
+        background-image: linear-gradient(to bottom, var(--particles-fade, #0f0f0f) 0%, transparent 100%);
+        z-index: 2;
+      }
+      .bg-particles::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 22vh;
+        background-image: linear-gradient(to top, var(--particles-fade, #0f0f0f) 0%, transparent 100%);
+        z-index: 2;
+      }
+      .bg-particles .squares {
+        height: 100%;
+        display: flex;
+        justify-content: space-around;
+        overflow: hidden;
+      }
+      .bg-particles .square {
+        align-self: flex-end;
+        width: 1em;
+        height: 1em;
+        font-size: 34px;
+        opacity: 0.14;
+        transform: translateY(110%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: bgParticleFloat 13s linear infinite;
+        will-change: transform;
+      }
+      .bg-particles .square img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .bg-particles .square .emoji {
+        font-size: 1em;
+        line-height: 1;
+      }
+      .bg-particles .square:nth-child(1) { font-size: 30px; animation-duration: 14s; }
+      .bg-particles .square:nth-child(2) { font-size: 58px; animation-delay: 1s;   animation-duration: 19s; filter: blur(2px);   opacity: 0.10; }
+      .bg-particles .square:nth-child(3) { font-size: 26px; animation-delay: 1.5s; animation-duration: 9s; }
+      .bg-particles .square:nth-child(4) { font-size: 40px; animation-delay: 0.5s; animation-duration: 15s; filter: blur(1.5px); }
+      .bg-particles .square:nth-child(5) { font-size: 48px; animation-delay: 4s;   animation-duration: 12s; filter: blur(1px);   opacity: 0.11; }
+      .bg-particles .square:nth-child(6) { font-size: 64px; animation-delay: 2s;   animation-duration: 10s; filter: blur(0.5px); opacity: 0.09; }
+      .bg-particles .square:nth-child(7) { font-size: 36px; animation-duration: 13s; }
+      .bg-particles .square:nth-child(8) { font-size: 54px; animation-delay: 5s;   animation-duration: 20s; filter: blur(3px);   opacity: 0.08; }
+      .bg-particles .square:nth-child(9) { font-size: 32px; animation-duration: 10s; }
+      .bg-particles .square:nth-child(10){ font-size: 46px; animation-delay: 6s;   animation-duration: 13s; filter: blur(0.5px); }
+
+      @keyframes bgParticleFloat {
+        from { transform: translateY(110%) rotate(-40deg); }
+        to   { transform: translateY(calc(-100vh - 110%)) rotate(30deg); }
+      }
     </style>
 <script type="importmap">
 {
