@@ -490,29 +490,13 @@
       }
 
       /* ====== FONDO: ICONOS FLOTANTES (basado en el efecto de UpZ) ====== */
+      /* Sin degradado: las partículas flotan sobre el fondo plano existente. */
       .bg-particles {
         position: fixed;
         inset: 0;
         z-index: 0;
         pointer-events: none;
         overflow: hidden;
-      }
-      /* Difuminado arriba y abajo para que las partículas se fundan con el fondo */
-      .bg-particles::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 55vh;
-        background-image: linear-gradient(to bottom, var(--particles-fade, #0f0f0f) 0%, transparent 100%);
-        z-index: 2;
-      }
-      .bg-particles::after {
-        content: '';
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 22vh;
-        background-image: linear-gradient(to top, var(--particles-fade, #0f0f0f) 0%, transparent 100%);
-        z-index: 2;
       }
       .bg-particles .squares {
         height: 100%;
@@ -525,13 +509,14 @@
         width: 1em;
         height: 1em;
         font-size: 34px;
-        opacity: 0.14;
+        --peak: 0.14; /* opacidad máxima; se desvanece a 0 al acercarse arriba */
+        opacity: 0;
         transform: translateY(110%);
         display: flex;
         align-items: center;
         justify-content: center;
         animation: bgParticleFloat 13s linear infinite;
-        will-change: transform;
+        will-change: transform, opacity;
       }
       .bg-particles .square img {
         width: 100%;
@@ -543,20 +528,25 @@
         line-height: 1;
       }
       .bg-particles .square:nth-child(1) { font-size: 30px; animation-duration: 14s; }
-      .bg-particles .square:nth-child(2) { font-size: 58px; animation-delay: 1s;   animation-duration: 19s; filter: blur(2px);   opacity: 0.10; }
+      .bg-particles .square:nth-child(2) { font-size: 58px; animation-delay: 1s;   animation-duration: 19s; filter: blur(2px);   --peak: 0.10; }
       .bg-particles .square:nth-child(3) { font-size: 26px; animation-delay: 1.5s; animation-duration: 9s; }
       .bg-particles .square:nth-child(4) { font-size: 40px; animation-delay: 0.5s; animation-duration: 15s; filter: blur(1.5px); }
-      .bg-particles .square:nth-child(5) { font-size: 48px; animation-delay: 4s;   animation-duration: 12s; filter: blur(1px);   opacity: 0.11; }
-      .bg-particles .square:nth-child(6) { font-size: 64px; animation-delay: 2s;   animation-duration: 10s; filter: blur(0.5px); opacity: 0.09; }
+      .bg-particles .square:nth-child(5) { font-size: 48px; animation-delay: 4s;   animation-duration: 12s; filter: blur(1px);   --peak: 0.11; }
+      .bg-particles .square:nth-child(6) { font-size: 64px; animation-delay: 2s;   animation-duration: 10s; filter: blur(0.5px); --peak: 0.09; }
       .bg-particles .square:nth-child(7) { font-size: 36px; animation-duration: 13s; }
-      .bg-particles .square:nth-child(8) { font-size: 54px; animation-delay: 5s;   animation-duration: 20s; filter: blur(3px);   opacity: 0.08; }
+      .bg-particles .square:nth-child(8) { font-size: 54px; animation-delay: 5s;   animation-duration: 20s; filter: blur(3px);   --peak: 0.08; }
       .bg-particles .square:nth-child(9) { font-size: 32px; animation-duration: 10s; }
       .bg-particles .square:nth-child(10){ font-size: 46px; animation-delay: 6s;   animation-duration: 13s; filter: blur(0.5px); }
 
+      /* Mantiene la opacidad casi todo el recorrido y se desvanece a 0 al
+         acercarse al borde superior, para que desaparezcan suavemente arriba. */
       @keyframes bgParticleFloat {
-        from { transform: translateY(110%) rotate(-40deg); }
-        to   { transform: translateY(calc(-100vh - 110%)) rotate(30deg); }
+        0%   { transform: translateY(110%) rotate(-40deg); opacity: var(--peak); }
+        60%  { opacity: var(--peak); }
+        88%  { opacity: 0; }
+        100% { transform: translateY(calc(-100vh - 110%)) rotate(30deg); opacity: 0; }
       }
+
     </style>
 <script type="importmap">
 {

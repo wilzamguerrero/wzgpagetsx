@@ -530,8 +530,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
-      {/* Iconos flotantes de fondo (usa el icono de la página actual) */}
-      <BackgroundParticles icon={activeIcon} fadeColor="#0f0f0f" />
+      {/* Iconos flotantes de fondo (usa el icono de la página actual), fondo plano */}
+      <BackgroundParticles icon={activeIcon} />
       {/* Glitch overlay with chromatic aberration - only when effects enabled */}
       <GlitchOverlay isActive={isSidebarOpen && effectsEnabled} />
       {isSidebarOpen && (
