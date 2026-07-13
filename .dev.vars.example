@@ -1,0 +1,17 @@
+# Variables de entorno del BACKEND (Cloudflare Pages Functions).
+# Copia este archivo a ".dev.vars" (ignorado por git) para pruebas locales con
+# `npx wrangler pages dev`, y configúralas también en el panel de Cloudflare
+# Pages (Settings -> Environment variables) para producción.
+
+# Secreto (token de integración) del workspace de Notion donde vive la página
+# de contacto. Este mismo secreto debe tener acceso compartido a CONTACT_PAGE_ID
+# y es el que sube los archivos. Si usas la MISMA integración del portfolio,
+# puedes omitirlo y se usará NOTION_PORTFOLIO_KEY.
+NOTION_CONTACT_KEY=secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# ID de la página de Notion donde se guardarán los envíos del formulario de
+# contacto (con/sin guiones o pegando la URL, da igual).
+CONTACT_PAGE_ID=00000000000000000000000000000000
+
+# Clave del proxy principal (ya la usas para leer el portfolio).
+NOTION_PORTFOLIO_KEY=ntn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

@@ -5,6 +5,7 @@ import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
 import { GlitchOverlay } from './components/GlitchOverlay';
+import { ContactPanel } from './components/ContactPanel';
 import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
@@ -55,6 +56,7 @@ const App: React.FC = () => {
   const pendingDeepLinkRef = useRef<string | null>(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   // Detectar si es móvil para columnas por defecto
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
@@ -495,6 +497,7 @@ const App: React.FC = () => {
         accentColor={accentColor}
         descending={descending}
         onToggleOrder={handleToggleOrder}
+        onOpenContact={() => setIsContactOpen(true)}
       />
       <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
         {state.error && (
@@ -517,6 +520,10 @@ const App: React.FC = () => {
           />
         </div>
       </main>
+
+      {isContactOpen && (
+        <ContactPanel onClose={() => setIsContactOpen(false)} accentColor={accentColor} />
+      )}
     </div>
   );
 };

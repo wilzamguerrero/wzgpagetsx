@@ -11,14 +11,16 @@
     "server": "node server.mjs",
     "build": "vite build",
     "preview": "vite preview",
+    "pages:dev": "wrangler pages dev dist --port 8788",
     "deploy": "wrangler pages deploy dist"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "framer-motion": "^11.11.17",
+    "jszip": "^3.10.1",
+    "lightgallery": "^2.8.2",
     "lucide-react": "^0.460.0",
-    "lightgallery": "^2.8.2"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240925.0",
