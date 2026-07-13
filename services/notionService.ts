@@ -49,6 +49,31 @@ export class NotionService {
     return match ? match[0] : idOrUrl;
   }
 
+  // Normaliza el objeto icon de Notion a un string (emoji o URL de imagen).
+  // Soporta: emoji, external, file, custom_emoji y el tipo nativo "icon"
+  // (que trae { name, color }); para este último se construye la URL del SVG
+  // de Notion, que incluye el color y permite mostrarlo y derivar el acento.
+  static parseIcon(iconObj: any): string | undefined {
+    if (!iconObj) return undefined;
+    switch (iconObj.type) {
+      case 'emoji':
+        return iconObj.emoji;
+      case 'external':
+        return iconObj.external?.url;
+      case 'file':
+        return iconObj.file?.url;
+      case 'custom_emoji':
+        return iconObj.custom_emoji?.url;
+      case 'icon': {
+        const name = iconObj.icon?.name;
+        const color = iconObj.icon?.color || 'gray';
+        return name ? `https://www.notion.so/icons/${name}_${color}.svg` : undefined;
+      }
+      default:
+        return undefined;
+    }
+  }
+
   private getHeaders() {
     return {
       'Authorization': `Bearer ${this.apiKey}`,
@@ -141,16 +166,7 @@ export class NotionService {
       }
 
       // Extraer icono de la página
-      let icon: string | undefined = undefined;
-      if (page.icon) {
-        if (page.icon.type === 'emoji') {
-          icon = page.icon.emoji;
-        } else if (page.icon.type === 'external') {
-          icon = page.icon.external?.url;
-        } else if (page.icon.type === 'file') {
-          icon = page.icon.file?.url;
-        }
-      }
+      const icon = NotionService.parseIcon(page.icon);
 
       // Extraer número para ordenar (buscar propiedad tipo number)
       let orderNumber: number | null = null;
@@ -317,17 +333,7 @@ export class NotionService {
     const cleanId = NotionService.formatUUID(pageId);
     try {
       const data = await this.notionFetch(`/pages/${cleanId}`, 'GET');
-      let icon: string | undefined = undefined;
-      if (data.icon) {
-        if (data.icon.type === 'emoji') {
-          icon = data.icon.emoji;
-        } else if (data.icon.type === 'external') {
-          icon = data.icon.external?.url;
-        } else if (data.icon.type === 'file') {
-          icon = data.icon.file?.url;
-        }
-      }
-      return { icon };
+      return { icon: NotionService.parseIcon(data.icon) };
     } catch (e) {
       return {};
     }

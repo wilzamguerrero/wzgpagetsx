@@ -17,7 +17,9 @@
             colors: {
               background: '#191919',
               surface: '#161616',
-              primary: '#00ffcb',
+              // primary usa una variable RGB para poder recolorear toda la app
+              // en runtime con el acento del icono de Notion (respeta /opacidad).
+              primary: 'rgb(var(--accent-rgb) / <alpha-value>)',
               accent: '#3b82f6',
             },
             fontFamily: {
@@ -40,6 +42,12 @@
       html::-webkit-scrollbar, 
       body::-webkit-scrollbar {
         display: none; /* Chrome, Safari, and Opera */
+      }
+
+      /* Canales RGB del color de acento (por defecto verde #00ffcb).
+         App.tsx lo actualiza con el color del icono de Notion. */
+      :root {
+        --accent-rgb: 0 255 203;
       }
 
       body {

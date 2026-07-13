@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NotionService, ROOT_PAGE_ID, SHOW_LOGS } from './services/notionService';
+import { extractAccentColor, hexToRgbChannels } from './services/accentColor';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
+  const [accentColor, setAccentColor] = useState('#00ffcb');
   const notionServiceRef = useRef<NotionService | null>(null);
   const hasPreloadedRef = useRef(false);
   
@@ -93,9 +95,9 @@ const App: React.FC = () => {
         return;
       }
       
-      // Cambiar columnas con teclas 1-6 (tanto numpad como números normales)
+      // Cambiar columnas con teclas 0-6 (0 = modo lector)
       const key = e.key;
-      if (['1', '2', '3', '4', '5', '6'].includes(key)) {
+      if (['0', '1', '2', '3', '4', '5', '6'].includes(key)) {
         e.preventDefault();
         setColumnCount(parseInt(key));
       }
@@ -103,6 +105,20 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
+
+  // Color de acento tomado del icono de la página activa en Notion.
+  useEffect(() => {
+    const activeBoard = state.boards.find(b => b.id === state.activeBoardId);
+    let cancelled = false;
+    extractAccentColor(activeBoard?.icon).then(color => {
+      if (cancelled) return;
+      setAccentColor(color);
+      // Recolorea el modo lector y toda la app (clase primary via --accent-rgb).
+      document.documentElement.style.setProperty('--reader-accent', color);
+      document.documentElement.style.setProperty('--accent-rgb', hexToRgbChannels(color));
+    });
+    return () => { cancelled = true; };
+  }, [state.activeBoardId, state.boards]);
 
   const createTitleCard = (title: string, id: string, parentTitle?: string): MediaItem => ({
     id: `title-${id}`,
@@ -425,6 +441,7 @@ const App: React.FC = () => {
         showDatabaseNames={SHOW_DATABASE_NAMES}
         effectsEnabled={effectsEnabled}
         onToggleEffects={() => setEffectsEnabled(prev => !prev)}
+        accentColor={accentColor}
       />
       <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
         {state.error && (
@@ -443,6 +460,7 @@ const App: React.FC = () => {
             onReorder={handleReorder}
             isSidebarOpen={isSidebarOpen}
             effectsEnabled={effectsEnabled}
+            accentColor={accentColor}
           />
         </div>
       </main>

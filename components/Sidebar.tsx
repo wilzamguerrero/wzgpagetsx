@@ -4,7 +4,7 @@ import { Board, Language } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Folder, FileText, Database, ChevronRight, ChevronDown, ChevronLeft, 
-    Maximize, Minimize, Circle, Home, UserRound, Sparkles
+    Maximize, Minimize, Circle, Home, UserRound, Sparkles, BookOpen
 } from 'lucide-react';
 import { t } from '../services/i18nService';
 
@@ -23,6 +23,7 @@ interface SidebarProps {
   showDatabaseNames: boolean;
   effectsEnabled: boolean;
   onToggleEffects: () => void;
+  accentColor?: string;
 }
 
 const MARKER_COLORS = [
@@ -100,28 +101,29 @@ const BoardTreeItem: React.FC<{
     const getIcon = () => {
       // Si tiene icono de Notion, mostrarlo con los colores de la app
       if (board.icon) {
-        // Filtros para teñir los iconos
-        const activeFilter = 'grayscale(1) brightness(1.2) sepia(1) hue-rotate(100deg) saturate(3)'; // Verde primary
         const inactiveFilter = 'grayscale(1) brightness(1.1) contrast(0.8)'; // Gris/Blanco
-        
-        // Si es emoji (string corto sin http)
+
+        // Emoji (string corto sin http): activo en color natural, inactivo gris.
         if (!board.icon.startsWith('http')) {
           return (
             <span 
               className={`text-sm w-4 h-4 flex items-center justify-center shrink-0 transition-all`}
-              style={{ filter: isActive ? activeFilter : inactiveFilter }}
+              style={{ filter: isActive ? 'none' : inactiveFilter }}
             >
               {board.icon}
             </span>
           );
         }
-        // Si es URL de imagen
+
+        // Imagen (icono nativo de Notion, etc.).
+        // Activo: color natural pero con brillo/saturación realzados para que
+        // luzca tan intenso como el texto. Inactivo: desaturado.
         return (
           <img 
             src={board.icon} 
             alt="" 
             className={`w-4 h-4 rounded shrink-0 object-cover transition-all`}
-            style={{ filter: isActive ? activeFilter : inactiveFilter }}
+            style={{ filter: isActive ? 'brightness(1.3) saturate(2)' : inactiveFilter }}
           />
         );
       }
@@ -213,7 +215,7 @@ const BoardTreeItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ 
     boards, activeBoardId, onSelectBoard, onGoHome, isOpen, onToggle, 
     columnCount, onColumnChange, language, onToggleLanguage, showDatabaseNames,
-    effectsEnabled, onToggleEffects
+    effectsEnabled, onToggleEffects, accentColor = '#00ffcb'
 }) => {
   const strings = t(language);
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
@@ -288,10 +290,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
       <div className={`fixed top-4 bottom-4 w-64 bg-surface border border-white/5 flex flex-col z-40 transition-transform shadow-2xl rounded-2xl left-4 ${isOpen ? 'translate-x-0' : '-translate-x-[120%]'}`}>
         <div className="p-4 border-b border-white/5 flex flex-col gap-3">
-          <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest px-1">{strings.columns}</span>
-          <div className="flex gap-2 justify-center">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{strings.columns}</span>
+            <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: columnCount === 0 ? accentColor : '#6b7280' }}>
+              {columnCount === 0 ? 'reader' : `${columnCount} col`}
+            </span>
+          </div>
+          <div className="flex gap-1.5">
+            {/* Botón 0 = modo lector, estilo propio con color de acento del icono de Notion */}
+            <button
+              onClick={() => onColumnChange(0)}
+              title="Modo lectura"
+              className={`h-9 flex-[1.6] flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-bold transition-all border ${columnCount === 0 ? 'text-black border-transparent' : 'bg-white/5 text-gray-400 border-white/5 hover:text-white'}`}
+              style={columnCount === 0 ? { backgroundColor: accentColor, boxShadow: `0 4px 16px ${accentColor}55` } : undefined}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>0</span>
+            </button>
             {[1,2,3,4,5,6].map(n => (
-              <button key={n} onClick={() => onColumnChange(n)} className={`w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-bold transition-all ${columnCount === n ? 'bg-primary text-black shadow-lg scale-110' : 'bg-white/5 text-gray-500 hover:text-white'}`}>
+              <button
+                key={n}
+                onClick={() => onColumnChange(n)}
+                className={`h-9 flex-1 flex items-center justify-center rounded-lg text-[11px] font-bold transition-all ${columnCount === n ? 'bg-primary text-black shadow-lg' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+              >
                 {n}
               </button>
             ))}

@@ -5,6 +5,7 @@ import { MediaCard, GroupedCard } from './MediaCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from '../services/i18nService';
 import { groupContentForReading, GroupedMediaItem, numberListItems } from '../services/contentGrouper';
+import { ReaderView } from './ReaderView';
 import { Menu, Columns3, Maximize, UserRound, Home } from 'lucide-react';
 
 // @ts-ignore
@@ -30,9 +31,10 @@ interface MasonryGridProps {
   onReorder?: (items: MediaItem[]) => void;
   isSidebarOpen?: boolean;
   effectsEnabled?: boolean;
+  accentColor?: string;
 }
 
-export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder, isSidebarOpen = false, effectsEnabled = true }) => {
+export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder, isSidebarOpen = false, effectsEnabled = true, accentColor = '#00ffcb' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryInstanceRef = useRef<any>(null);
   
@@ -174,6 +176,8 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   }, [items.length, isLoading, language]);
 
   const columns = useMemo(() => {
+    // columnCount === 0 es el modo lector: no se arman columnas de masonry.
+    if (columnCount < 1) return [];
     const cols: GroupedMediaItem[][] = Array.from({ length: columnCount }, () => []);
     displayItems.forEach((item, index) => {
       cols[index % columnCount].push(item);
@@ -311,7 +315,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
     } else if (galleryInstanceRef.current) {
       galleryInstanceRef.current.refresh();
     }
-  }, [items]);
+  }, [items, columnCount]);
 
   useEffect(() => {
     return () => {
@@ -324,6 +328,15 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   if (isLoading && items.length === 0) {
     return <div className="flex flex-col items-center justify-center min-h-[100vh] w-full p-4"><div className="loader"></div></div>;
+  }
+
+  // Modo lector (columna 0): una sola columna con estilo de lectura y color de acento.
+  if (columnCount === 0 && items.length > 0) {
+    return (
+      <div ref={containerRef} className="w-full flex justify-center">
+        <ReaderView items={numberListItems(items)} language={language} accentColor={accentColor} />
+      </div>
+    );
   }
 
   if (items.length === 0) {
