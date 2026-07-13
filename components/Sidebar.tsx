@@ -4,7 +4,8 @@ import { Board, Language } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Folder, FileText, Database, ChevronRight, ChevronDown, ChevronLeft, 
-    Maximize, Minimize, Circle, Home, UserRound, Sparkles, BookOpen
+    Maximize, Minimize, Circle, Home, UserRound, Sparkles, BookOpen,
+    ArrowDownWideNarrow, ArrowUpWideNarrow
 } from 'lucide-react';
 import { t } from '../services/i18nService';
 
@@ -24,6 +25,8 @@ interface SidebarProps {
   effectsEnabled: boolean;
   onToggleEffects: () => void;
   accentColor?: string;
+  descending: boolean;
+  onToggleOrder: () => void;
 }
 
 const MARKER_COLORS = [
@@ -215,7 +218,8 @@ const BoardTreeItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ 
     boards, activeBoardId, onSelectBoard, onGoHome, isOpen, onToggle, 
     columnCount, onColumnChange, language, onToggleLanguage, showDatabaseNames,
-    effectsEnabled, onToggleEffects, accentColor = '#00ffcb'
+    effectsEnabled, onToggleEffects, accentColor = '#00ffcb',
+    descending, onToggleOrder
 }) => {
   const strings = t(language);
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
@@ -353,6 +357,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-400">{effectsEnabled ? 'FX On' : 'FX Off'}</span>
                 <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">F</span>
+              </div>
+            </div>
+
+            <div className="relative group/tooltip">
+              <button onClick={onToggleOrder} className={getActionBtnClass(descending)}>
+                {descending ? <ArrowDownWideNarrow className="w-4 h-4" /> : <ArrowUpWideNarrow className="w-4 h-4" />}
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">{descending ? 'Recientes primero' : 'Antiguos primero'}</span>
               </div>
             </div>
 

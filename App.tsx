@@ -9,6 +9,18 @@ import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
 
+// Invierte el orden del contenido dejando arriba las tarjetas de cabecera
+// (título y propiedades). Sirve para alternar ascendente/descendente.
+const reverseContent = (media: MediaItem[]): MediaItem[] => {
+  const head: MediaItem[] = [];
+  const body: MediaItem[] = [];
+  for (const m of media) {
+    if ((m.type === 'title' || m.type === 'properties') && body.length === 0) head.push(m);
+    else body.push(m);
+  }
+  return [...head, ...body.reverse()];
+};
+
 // Reconstruye un UUID con guiones (8-4-4-4-12) a partir de 32 hex sin guiones.
 const toDashedId = (hex: string): string => {
   const c = hex.replace(/-/g, '');
@@ -48,6 +60,9 @@ const App: React.FC = () => {
   const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [accentColor, setAccentColor] = useState('#00ffcb');
+  // Orden del contenido. false = orden natural de Notion (por defecto, como estaba);
+  // true = recientes primero (invertido).
+  const [descending, setDescending] = useState(false);
   const notionServiceRef = useRef<NotionService | null>(null);
   const hasPreloadedRef = useRef(false);
   
@@ -407,8 +422,9 @@ const App: React.FC = () => {
         mediaItems.push(...newMedia);
       }
       // Si no hay media real, mediaItems queda vacío y MasonryGrid mostrará el home
-      
-      const finalMedia = mediaItems;
+      // Notion devuelve el contenido en orden ascendente (más antiguo primero);
+      // si el modo es descendente, invertimos (recientes arriba).
+      const finalMedia = descending ? reverseContent(mediaItems) : mediaItems;
 
       setState(prev => {
           const existingIds = new Set(prev.boards.map(b => b.id));
@@ -444,6 +460,12 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, media: newMedia }));
   };
 
+  // Alterna orden ascendente/descendente sin recargar: invierte el contenido actual.
+  const handleToggleOrder = () => {
+    setDescending(prev => !prev);
+    setState(prev => ({ ...prev, media: reverseContent(prev.media) }));
+  };
+
   return (
     <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
       {/* Glitch overlay with chromatic aberration - only when effects enabled */}
@@ -471,6 +493,8 @@ const App: React.FC = () => {
         effectsEnabled={effectsEnabled}
         onToggleEffects={() => setEffectsEnabled(prev => !prev)}
         accentColor={accentColor}
+        descending={descending}
+        onToggleOrder={handleToggleOrder}
       />
       <main className={`flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
         {state.error && (
