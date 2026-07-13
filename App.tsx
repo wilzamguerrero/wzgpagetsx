@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { NotionService, ROOT_PAGE_ID, NOTION_PORTFOLIO_KEY, SHOW_LOGS } from './services/notionService';
+import { NotionService, ROOT_PAGE_ID, SHOW_LOGS } from './services/notionService';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
@@ -11,7 +11,7 @@ const SHOW_DATABASE_NAMES = false;
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     isAuthenticated: true, 
-    apiKey: NOTION_PORTFOLIO_KEY,
+    apiKey: '',
     rootPageId: ROOT_PAGE_ID,
     boards: [], 
     activeBoardId: null, // Siempre empezar en home al hacer refresh
@@ -146,12 +146,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      if (!NOTION_PORTFOLIO_KEY) {
-        setState(prev => ({ ...prev, isLoading: false, error: 'API Key missing.' }));
+      if (!ROOT_PAGE_ID) {
+        setState(prev => ({ ...prev, isLoading: false, error: 'ROOT_PAGE_ID missing.' }));
         return;
       }
       try {
-        const service = new NotionService(NOTION_PORTFOLIO_KEY);
+        const service = new NotionService();
         notionServiceRef.current = service;
         
         // Cargar boards cacheados de localStorage para sidebar instantáneo

@@ -8,9 +8,9 @@ const IS_LOCALHOST = IS_BROWSER && (window.location.hostname === 'localhost' || 
 const API_BASE = IS_LOCALHOST ? 'http://localhost:3001/api/notion' : '/api/notion';
 const NOTION_VERSION = '2022-06-28';
 
-// Variables de entorno (VITE_ prefix para el frontend)
+// Variable de entorno para el frontend. Solo el ID de la página (no secreto).
+// La clave de Notion vive únicamente en el servidor (proxy), nunca en el cliente.
 export const ROOT_PAGE_ID = import.meta.env.VITE_ROOT_PAGE_ID || '';
-export const NOTION_PORTFOLIO_KEY = import.meta.env.VITE_NOTION_PORTFOLIO_KEY || '';
 
 // Controla si se muestran logs en consola
 export const SHOW_LOGS = false;
@@ -20,7 +20,8 @@ export class NotionService {
   private cache: Map<string, { data: any, timestamp: number }> = new Map();
   private CACHE_TTL = 5000; // 5 segundos - muy corto para actualizaciones rápidas
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string = '') {
+    // La autenticación la resuelve el proxy en el servidor; el cliente no maneja la key.
     this.apiKey = apiKey;
   }
 
