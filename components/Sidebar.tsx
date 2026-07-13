@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Board, Language } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -48,12 +48,14 @@ const BoardTreeItem: React.FC<{
     boardMarkers: Record<string, string>,
     onSetMarker: (id: string, color: string) => void,
     strings: any,
-    showDatabaseNames: boolean
-}> = ({ board, allBoards, activeBoardId, onSelect, depth, boardMarkers, onSetMarker, strings, showDatabaseNames }) => {
+    showDatabaseNames: boolean,
+    expandedIds: Set<string>,
+    onSetExpanded: (id: string, value: boolean) => void
+}> = ({ board, allBoards, activeBoardId, onSelect, depth, boardMarkers, onSetMarker, strings, showDatabaseNames, expandedIds, onSetExpanded }) => {
     const children = allBoards.filter(b => b.parentId === board.id);
     const hasKnownChildren = children.length > 0;
     const isActive = activeBoardId === board.id;
-    const [isExpanded, setIsExpanded] = useState(false);
+    const isExpanded = expandedIds.has(board.id);
     const [isPickingColor, setIsPickingColor] = useState(false);
     
     // Las bases de datos que empiezan con * siempre se muestran (excepción a showDatabaseNames)
@@ -74,6 +76,8 @@ const BoardTreeItem: React.FC<{
                         onSetMarker={onSetMarker}
                         strings={strings}
                         showDatabaseNames={showDatabaseNames}
+                        expandedIds={expandedIds}
+                        onSetExpanded={onSetExpanded}
                     />
                 ))}
             </>
@@ -87,19 +91,19 @@ const BoardTreeItem: React.FC<{
 
     useEffect(() => {
         if (isActive && hasKnownChildren) {
-            setIsExpanded(true);
+            onSetExpanded(board.id, true);
         }
     }, [isActive, hasKnownChildren]);
 
     const handleRowClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         onSelect(board.id);
-        if (hasKnownChildren) setIsExpanded(!isExpanded);
+        if (hasKnownChildren) onSetExpanded(board.id, !isExpanded);
     };
 
     const toggleExpandOnly = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (hasKnownChildren) setIsExpanded(!isExpanded);
+        if (hasKnownChildren) onSetExpanded(board.id, !isExpanded);
     };
 
     const getIcon = () => {
@@ -208,6 +212,8 @@ const BoardTreeItem: React.FC<{
                             onSetMarker={onSetMarker}
                             strings={strings}
                             showDatabaseNames={showDatabaseNames}
+                            expandedIds={expandedIds}
+                            onSetExpanded={onSetExpanded}
                         />
                     ))}
                 </div>
@@ -226,6 +232,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showCV, setShowCV] = useState(false);
+
+  // Recordar qué ramas del árbol están desplegadas (persistido en localStorage).
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('sidebar_expanded') || '[]')); }
+    catch { return new Set(); }
+  });
+
+  const setExpanded = useCallback((id: string, value: boolean) => {
+    setExpandedIds(prev => {
+      if (value === prev.has(id)) return prev; // sin cambios: evita re-render
+      const next = new Set(prev);
+      if (value) next.add(id); else next.delete(id);
+      try { localStorage.setItem('sidebar_expanded', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, []);
 
   // URL del embed de Canva - formato correcto con ?embed
   const CANVA_EMBED_URL = "https://www.canva.com/design/DAG7-GUGdHQ/7AIMi6rsRZATfrWpT7JRAQ/view?embed";
@@ -337,6 +359,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSetMarker={handleSetMarker} 
                 strings={strings}
                 showDatabaseNames={showDatabaseNames}
+                expandedIds={expandedIds}
+                onSetExpanded={setExpanded}
             />
           ))}
         </div>

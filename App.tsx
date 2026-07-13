@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NotionService, ROOT_PAGE_ID, SHOW_LOGS } from './services/notionService';
-import { extractAccentColor, hexToRgbChannels } from './services/accentColor';
+import { extractAccentColor, getCachedAccent, setCachedAccent } from './services/accentColor';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
 import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
@@ -9,6 +9,15 @@ import { ContactPanel } from './components/ContactPanel';
 import { t } from './services/i18nService';
 
 const SHOW_DATABASE_NAMES = false; 
+
+// Helpers para animar el color de acento (transición suave de los canales RGB).
+const hexToRgbTriple = (hex: string): [number, number, number] => {
+  const m = hex.replace('#', '');
+  if (m.length !== 6) return [0, 255, 203];
+  return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+};
+const toHex2 = (v: number) => Math.round(v).toString(16).padStart(2, '0');
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 // Invierte el orden del contenido dejando arriba las tarjetas de cabecera
 // (título y propiedades). Sirve para alternar ascendente/descendente.
@@ -67,8 +76,31 @@ const App: React.FC = () => {
   const [descending, setDescending] = useState(false);
   const notionServiceRef = useRef<NotionService | null>(null);
   const hasPreloadedRef = useRef(false);
+  const accentRafRef = useRef<number | undefined>(undefined);
+  const currentAccentRgbRef = useRef<[number, number, number]>([0, 255, 203]);
   
   const strings = t(state.language);
+
+  // Anima el color de acento desde el actual hasta el objetivo (rápido pero suave).
+  const animateAccentTo = (targetHex: string) => {
+    const [tr, tg, tb] = hexToRgbTriple(targetHex);
+    const [sr, sg, sb] = currentAccentRgbRef.current;
+    const startTime = performance.now();
+    const dur = 320;
+    if (accentRafRef.current) cancelAnimationFrame(accentRafRef.current);
+    const tick = (now: number) => {
+      const e = easeOutCubic(Math.min(1, (now - startTime) / dur));
+      const R = Math.round(sr + (tr - sr) * e);
+      const G = Math.round(sg + (tg - sg) * e);
+      const B = Math.round(sb + (tb - sb) * e);
+      currentAccentRgbRef.current = [R, G, B];
+      const root = document.documentElement.style;
+      root.setProperty('--accent-rgb', `${R} ${G} ${B}`);
+      root.setProperty('--reader-accent', `#${toHex2(R)}${toHex2(G)}${toHex2(B)}`);
+      if (e < 1) accentRafRef.current = requestAnimationFrame(tick);
+    };
+    accentRafRef.current = requestAnimationFrame(tick);
+  };
 
   // Actualizar URL sin recargar la página.
   // Ruta limpia: /<id-sin-guiones> para un tablero, o / para el home.
@@ -136,14 +168,33 @@ const App: React.FC = () => {
 
   // Color de acento tomado del icono de la página activa en Notion.
   useEffect(() => {
-    const activeBoard = state.boards.find(b => b.id === state.activeBoardId);
+    const id = state.activeBoardId;
+
+    const applyAccent = (color: string) => {
+      setAccentColor(color);
+      // Recolorea toda la app (clase primary + modo lector) con transición suave.
+      animateAccentTo(color);
+    };
+
+    // 1) Aplicar al instante el color cacheado (evita el parpadeo al recargar).
+    if (id) {
+      const cached = getCachedAccent(id);
+      if (cached) applyAccent(cached);
+    } else {
+      applyAccent('#00ffcb');
+    }
+
+    // 2) Si hay una página activa pero su board aún no está cargado, NO recalcular
+    //    (evita sobrescribir con el verde por defecto mientras carga).
+    const activeBoard = state.boards.find(b => b.id === id);
+    if (id && !activeBoard) return;
+
+    // 3) Recalcular desde el icono real y guardar en cache.
     let cancelled = false;
     extractAccentColor(activeBoard?.icon).then(color => {
       if (cancelled) return;
-      setAccentColor(color);
-      // Recolorea el modo lector y toda la app (clase primary via --accent-rgb).
-      document.documentElement.style.setProperty('--reader-accent', color);
-      document.documentElement.style.setProperty('--accent-rgb', hexToRgbChannels(color));
+      applyAccent(color);
+      if (id) setCachedAccent(id, color);
     });
     return () => { cancelled = true; };
   }, [state.activeBoardId, state.boards]);
@@ -211,12 +262,17 @@ const App: React.FC = () => {
         }
         
         const { boards } = await loadRootContent(service, true);
-        
-        // Guardar boards en localStorage para la próxima visita
-        try { localStorage.setItem('cached_sidebar_boards', JSON.stringify(boards)); } catch (e) {}
-        
-        // Home siempre empieza con media vacío para mostrar logo y frases
-        setState(prev => ({ ...prev, boards, media: [], isLoading: false, error: null }));
+
+        // Fusionar con lo ya presente (cache): conservamos las ramas profundas ya
+        // cargadas para que el árbol desplegado NO se pierda al recargar, y
+        // actualizamos/incorporamos los tableros de la raíz recién cargados.
+        setState(prev => {
+          const freshIds = new Set(boards.map(b => b.id));
+          const preservedDeep = prev.boards.filter(b => !freshIds.has(b.id));
+          const merged = [...boards, ...preservedDeep];
+          try { localStorage.setItem('cached_sidebar_boards', JSON.stringify(merged)); } catch (e) {}
+          return { ...prev, boards: merged, media: [], isLoading: false, error: null };
+        });
         
         // Deep link: si la URL trae un ID de tablero en el path (/<id>), abrirlo.
         // Se difiere a un efecto para que los tableros ya estén en el estado y

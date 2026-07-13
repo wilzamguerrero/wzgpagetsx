@@ -22,6 +22,29 @@ const NOTION_ICON_COLORS: Record<string, string> = {
 // Cache en memoria para no recalcular el mismo icono varias veces.
 const cache = new Map<string, string>();
 
+// Cache persistente del acento por página (localStorage). Permite pintar el
+// color correcto al instante al recargar, sin esperar a que carguen los tableros.
+const ACCENT_CACHE_KEY = "accent_by_board";
+
+export function getCachedAccent(boardId: string): string | null {
+  try {
+    const map = JSON.parse(localStorage.getItem(ACCENT_CACHE_KEY) || "{}");
+    return map[boardId] || null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedAccent(boardId: string, color: string): void {
+  try {
+    const map = JSON.parse(localStorage.getItem(ACCENT_CACHE_KEY) || "{}");
+    map[boardId] = color;
+    localStorage.setItem(ACCENT_CACHE_KEY, JSON.stringify(map));
+  } catch {
+    /* ignorar cuota/errores de localStorage */
+  }
+}
+
 export async function extractAccentColor(icon?: string): Promise<string> {
   if (!icon) return DEFAULT_ACCENT;
   if (cache.has(icon)) return cache.get(icon)!;

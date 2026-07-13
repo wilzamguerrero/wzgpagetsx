@@ -8,18 +8,17 @@ interface ReaderViewProps {
   accentColor: string;
 }
 
-// Convierte un color hex (#rrggbb) a rgba con la opacidad indicada.
-const withAlpha = (hex: string, alpha: number): string => {
-  const m = hex.replace('#', '');
-  if (m.length !== 6) return hex;
-  const r = parseInt(m.slice(0, 2), 16);
-  const g = parseInt(m.slice(2, 4), 16);
-  const b = parseInt(m.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
+// El color de acento se lee de la variable CSS animada por App, para que el modo
+// lector cambie de color con la misma transición suave que el resto de la app.
+const ACCENT_VAR = 'var(--reader-accent, #00ffcb)';
 
-export const ReaderView: React.FC<ReaderViewProps> = ({ items, language, accentColor }) => {
-  const accent = accentColor || '#00ffcb';
+// Devuelve el acento con opacidad usando color-mix sobre la variable animada.
+// (Ignora el primer argumento; se mantiene la firma para no tocar las llamadas.)
+const withAlpha = (_accent: string, alpha: number): string =>
+  `color-mix(in srgb, ${ACCENT_VAR} ${Math.round(alpha * 100)}%, transparent)`;
+
+export const ReaderView: React.FC<ReaderViewProps> = ({ items, language }) => {
+  const accent = ACCENT_VAR;
 
   // Numerar las secciones (headings) al estilo motion.dev: 01, 02, 03...
   const rows = useMemo(() => {
