@@ -560,6 +560,7 @@ const App: React.FC = () => {
             language={state.language} 
             onReorder={handleReorder}
             isSidebarOpen={false}
+            isMenuOpen={isMenuOpen}
             effectsEnabled={effectsEnabled}
             accentColor={accentColor}
           />

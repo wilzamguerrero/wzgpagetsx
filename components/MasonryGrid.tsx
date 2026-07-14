@@ -40,11 +40,12 @@ interface MasonryGridProps {
   language: Language;
   onReorder?: (items: MediaItem[]) => void;
   isSidebarOpen?: boolean;
+  isMenuOpen?: boolean;
   effectsEnabled?: boolean;
   accentColor?: string;
 }
 
-export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder, isSidebarOpen = false, effectsEnabled = true, accentColor = '#00ffcb' }) => {
+export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, columnCount, language, onReorder, isSidebarOpen = false, isMenuOpen = false, effectsEnabled = true, accentColor = '#00ffcb' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const galleryInstanceRef = useRef<any>(null);
   
@@ -372,7 +373,8 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   }, []);
 
   if (isLoading && items.length === 0) {
-    return <div className="flex flex-col items-center justify-center min-h-[100vh] w-full p-4"><div className="loader"></div></div>;
+    // Solo fondo negro mientras carga (sin loader); el contenido entra con fade.
+    return <div className="fixed inset-0 z-50 bg-[#0a0a0a]" />;
   }
 
   // Modo lector (columna 0): una sola columna con estilo de lectura y color de acento.
@@ -386,25 +388,36 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   if (items.length === 0) {
     return (
-      <div className="relative flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4">
-        {/* Fondo animado Dither (WebGL), detrás del logo y las frases */}
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <Suspense fallback={null}>
-            <Dither
-              waveColor={hexToRgb01(accentColor)}
-              waveSpeed={0.05}
-              waveFrequency={3}
-              waveAmplitude={0.3}
-              colorNum={4}
-              pixelSize={2}
-              enableMouseInteraction={false}
-              focusUV={logoFocus ? [logoFocus.x, logoFocus.y] : [0.5, 0.38]}
-              mouseRadius={0.35}
-            />
-          </Suspense>
-        </div>
-        <div className="relative z-10 flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
-          <motion.div ref={logoBoxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative w-52 h-52 md:w-60 md:h-60 bg-[#191919] border border-[#191919] rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
+      <div className="relative flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4 bg-[#0a0a0a]">
+        {/* Fondo animado Dither (WebGL): aparece primero. Se desmonta al abrir el
+            menú (ahorra recursos y evita partículas dobles). */}
+        <AnimatePresence>
+          {!isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+              className="fixed inset-0 z-0 pointer-events-none"
+            >
+              <Suspense fallback={null}>
+                <Dither
+                  waveColor={hexToRgb01(accentColor)}
+                  waveSpeed={0.05}
+                  waveFrequency={3}
+                  waveAmplitude={0.3}
+                  colorNum={4}
+                  pixelSize={2}
+                  enableMouseInteraction={false}
+                  focusUV={logoFocus ? [logoFocus.x, logoFocus.y] : [0.5, 0.38]}
+                  mouseRadius={0.35}
+                />
+              </Suspense>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.div initial={false} animate={{ opacity: isMenuOpen ? 0 : 1 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="relative z-10 flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
+          <motion.div ref={logoBoxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9, delay: 0.8, ease: 'easeOut' }} className="relative w-52 h-52 md:w-60 md:h-60 bg-transparent rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
               <AnimatePresence>
                 {isPulsing && (
                   <motion.svg initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -412,20 +425,25 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
                   </motion.svg>
                 )}
               </AnimatePresence>
-              <img src="https://iili.io/fc6Elv2.gif" alt="Logo" className="w-42 h-42 md:w-52 md:h-52 object-contain pointer-events-none select-none z-10" />
+              <img src="https://iili.io/fc6Elv2.gif" alt="Logo" className="w-42 h-42 md:w-52 md:h-52 object-contain pointer-events-none select-none z-10" style={{ filter: 'brightness(0.82) contrast(1.18)' }} />
           </motion.div>
-          <div className="h-28 flex flex-col items-center justify-start mx-auto relative">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1.6, ease: 'easeOut' }}
+            className="h-28 flex flex-col items-center justify-start mx-auto relative"
+          >
             <AnimatePresence mode="wait">
               {isTextVisible ? (
-                <motion.p key={currentPhrase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 1 }} className="text-gray-400 text-[10px] md:text-xs font-medium opacity-80">{currentPhrase}</motion.p>
+                <motion.p key={currentPhrase} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 1 }} className="text-primary text-[10px] md:text-xs font-medium opacity-80">{currentPhrase}</motion.p>
               ) : isPulsing ? (
                 <motion.div key="dots" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-3 pt-6 items-center justify-center">
                    {[0, 0.2, 0.4].map(d => <div key={d} className="w-1 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${d}s` }}></div>)}
                 </motion.div>
               ) : null}
             </AnimatePresence>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     );
   }
