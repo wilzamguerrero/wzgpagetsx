@@ -173,14 +173,16 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
   const hoveredBoard = hoveredId ? currentItems.find(b => b.id === hoveredId) : null;
   const hoveredAccent = (hoveredId && accents[hoveredId]) || accentColor;
 
-  const renderIcon = (board: Board, size: number, accent: string) => {
+  // colored=false → icono en blanco; colored=true → color natural (Notion).
+  const renderIcon = (board: Board, size: number, accent: string, colored = true) => {
+    const whiteFilter = 'brightness(0) invert(1)';
     if (board.icon) {
       if (board.icon.startsWith('http')) {
-        return <img src={board.icon} alt="" style={{ width: size, height: size, objectFit: 'contain' }} />;
+        return <img src={board.icon} alt="" style={{ width: size, height: size, objectFit: 'contain', filter: colored ? 'none' : whiteFilter, transition: 'filter 0.3s' }} />;
       }
-      return <span style={{ fontSize: size * 0.9, lineHeight: 1 }}>{board.icon}</span>;
+      return <span style={{ fontSize: size * 0.9, lineHeight: 1, filter: colored ? 'none' : whiteFilter, transition: 'filter 0.3s' }}>{board.icon}</span>;
     }
-    return <span style={{ width: size * 0.35, height: size * 0.35, borderRadius: '50%', background: accent, display: 'inline-block' }} />;
+    return <span style={{ width: size * 0.35, height: size * 0.35, borderRadius: '50%', background: colored ? accent : '#ffffff', display: 'inline-block', transition: 'background 0.3s' }} />;
   };
 
   // Click en una fila: si tiene hijos, entra un nivel; si no, abre su contenido.
@@ -325,8 +327,8 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
             <div
               className="relative z-10 flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col px-6 sm:px-10 my-4 sm:my-8"
               style={{
-                maskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%)',
               }}
             >
               <AnimatePresence mode="wait">
@@ -362,7 +364,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                           }}
                         >
                           <span className="shrink-0 w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center">
-                            {renderIcon(board, 24, accent)}
+                            {renderIcon(board, 24, accent, isHovered || isActive)}
                           </span>
                           <span
                             className="flex-1 font-bold uppercase leading-none tracking-tight truncate transition-transform duration-300 group-hover:translate-x-2"
