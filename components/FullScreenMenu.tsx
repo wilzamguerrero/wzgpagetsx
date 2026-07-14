@@ -223,10 +223,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                     className="absolute inset-0"
                     style={{ background: `radial-gradient(circle at 72% 45%, ${hoveredAccent}22, transparent 60%)` }}
                   />
-                  <div
-                    className="relative flex items-center justify-center rounded-3xl"
-                    style={{ width: 340, height: 340, boxShadow: `0 0 120px ${hoveredAccent}55` }}
-                  >
+                  <div className="relative flex items-center justify-center">
                     {renderIcon(hoveredBoard, 200, hoveredAccent)}
                   </div>
                 </motion.div>
@@ -295,7 +292,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
 
             {/* Lista de tableros del nivel actual */}
             <div
-              className="relative z-10 flex-1 overflow-y-auto no-scrollbar flex flex-col px-6 sm:px-10"
+              className="relative z-10 flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col px-6 sm:px-10 my-4 sm:my-8"
               onMouseLeave={() => setHoveredId(null)}
               style={{
                 maskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
