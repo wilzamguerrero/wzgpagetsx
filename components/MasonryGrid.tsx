@@ -1,8 +1,18 @@
 
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, Suspense, lazy } from 'react';
 import { MediaItem, Language } from '../types';
 import { MediaCard, GroupedCard } from './MediaCard';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Fondo WebGL "Dither" (carga diferida).
+const Dither = lazy(() => import('./Dither'));
+
+// Convierte un color hex (#rrggbb) a triple normalizado [0..1] para el Dither.
+const hexToRgb01 = (hex: string): [number, number, number] => {
+  const m = (hex || '').replace('#', '');
+  if (m.length !== 6) return [0.5, 0.5, 0.5];
+  return [parseInt(m.slice(0, 2), 16) / 255, parseInt(m.slice(2, 4), 16) / 255, parseInt(m.slice(4, 6), 16) / 255];
+};
 import { t } from '../services/i18nService';
 import { groupContentForReading, GroupedMediaItem, numberListItems } from '../services/contentGrouper';
 import { ReaderView } from './ReaderView';
@@ -341,8 +351,23 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4">
-        <div className="flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
+      <div className="relative flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4">
+        {/* Fondo animado Dither (WebGL), detrás del logo y las frases */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <Suspense fallback={null}>
+            <Dither
+              waveColor={hexToRgb01(accentColor)}
+              waveSpeed={0.05}
+              waveFrequency={3}
+              waveAmplitude={0.3}
+              colorNum={4}
+              pixelSize={2}
+              enableMouseInteraction={false}
+              mouseRadius={0.3}
+            />
+          </Suspense>
+        </div>
+        <div className="relative z-10 flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative w-52 h-52 md:w-60 md:h-60 bg-[#191919] border border-[#191919] rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
               <AnimatePresence>
                 {isPulsing && (

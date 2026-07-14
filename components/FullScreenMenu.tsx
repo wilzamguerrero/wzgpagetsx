@@ -1,5 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Fondo animado Dither (carga diferida).
+const Dither = lazy(() => import('./Dither'));
+
+// Convierte un color hex (#rrggbb) a triple normalizado [0..1].
+const hexToRgb01 = (hex: string): [number, number, number] => {
+  const m = hex.replace('#', '');
+  if (m.length !== 6) return [0.5, 0.5, 0.5];
+  return [parseInt(m.slice(0, 2), 16) / 255, parseInt(m.slice(2, 4), 16) / 255, parseInt(m.slice(4, 6), 16) / 255];
+};
 import {
   X, Home, UserRound, Sparkles, BookOpen, ChevronRight, ArrowLeft,
   ArrowDownWideNarrow, ArrowUpWideNarrow, Send, Maximize, Minimize
@@ -208,6 +218,31 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
               backgroundColor: 'rgba(16, 16, 16, 0.96)',
             }}
           >
+            {/* Efecto Dither en la mitad derecha, aparece suavemente al hacer hover */}
+            <motion.div
+              className="pointer-events-none absolute top-0 right-0 h-full w-3/5 z-0 overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: hoveredBoard ? 0.55 : 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+              style={{
+                // Máscara radial: borde orgánico/curvo hacia la izquierda (no una línea recta).
+                maskImage: 'radial-gradient(115% 130% at 100% 50%, #000 42%, rgba(0,0,0,0.5) 62%, transparent 82%)',
+                WebkitMaskImage: 'radial-gradient(115% 130% at 100% 50%, #000 42%, rgba(0,0,0,0.5) 62%, transparent 82%)',
+              }}
+            >
+              <Suspense fallback={null}>
+                <Dither
+                  waveColor={hexToRgb01(hoveredAccent)}
+                  waveSpeed={0.05}
+                  waveFrequency={3}
+                  waveAmplitude={0.3}
+                  colorNum={4}
+                  pixelSize={2}
+                  enableMouseInteraction={false}
+                />
+              </Suspense>
+            </motion.div>
+
             {/* Preview a pantalla completa: icono grande con el color de acento */}
             <AnimatePresence>
               {hoveredBoard && (
@@ -219,10 +254,6 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="pointer-events-none fixed inset-0 flex items-center justify-center"
                 >
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: `radial-gradient(circle at 72% 45%, ${hoveredAccent}22, transparent 60%)` }}
-                  />
                   <div className="relative flex items-center justify-center">
                     {renderIcon(hoveredBoard, 200, hoveredAccent)}
                   </div>
@@ -293,7 +324,6 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
             {/* Lista de tableros del nivel actual */}
             <div
               className="relative z-10 flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col px-6 sm:px-10 my-4 sm:my-8"
-              onMouseLeave={() => setHoveredId(null)}
               style={{
                 maskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
                 WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
@@ -306,6 +336,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -24 }}
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  onMouseLeave={() => setHoveredId(null)}
                   className="w-full max-w-3xl mx-auto my-auto py-14"
                 >
                   {currentItems.length === 0 ? (
