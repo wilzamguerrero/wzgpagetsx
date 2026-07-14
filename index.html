@@ -58,6 +58,28 @@
         color: #ffffff;
       }
 
+      /* Quitar el borde blanco de foco (focus ring) y el resaltado táctil en
+         elementos interactivos, tanto al hacer clic como al navegar con teclado. */
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button,
+      a,
+      [role="button"],
+      [tabindex] {
+        outline: none;
+      }
+      button:focus,
+      button:focus-visible,
+      a:focus,
+      a:focus-visible,
+      [role="button"]:focus,
+      [role="button"]:focus-visible,
+      [tabindex]:focus,
+      [tabindex]:focus-visible {
+        outline: none !important;
+      }
+
       /* Hide scrollbar for specific utility class */
       .no-scrollbar::-webkit-scrollbar {
         display: none;

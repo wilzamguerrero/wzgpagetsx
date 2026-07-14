@@ -68,7 +68,8 @@ const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Detectar si es móvil para columnas por defecto
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
+  // Por defecto: modo lectura (columna 0).
+  const [columnCount, setColumnCount] = useState(0);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [accentColor, setAccentColor] = useState('#00ffcb');
   // Orden del contenido. false = orden natural de Notion (por defecto, como estaba);
