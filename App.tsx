@@ -530,7 +530,7 @@ const App: React.FC = () => {
   const activeIcon = state.boards.find(b => b.id === state.activeBoardId)?.icon;
 
   return (
-    <div className="min-h-screen bg-black text-white flex overflow-x-hidden">
+    <div className={`min-h-screen text-white flex overflow-x-hidden transition-colors duration-500 ${state.media.length === 0 ? 'bg-black' : 'bg-[#191919]'}`}>
       {/* Iconos flotantes de fondo (usa el icono de la página actual).
           Se apagan/encienden suavemente con el botón FX y se desmontan para ahorrar recursos. */}
       <AnimatePresence>

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { MediaItem, NotionProperty, Language } from '../types';
 import { ExternalLink, FileDown, Quote as QuoteIcon, MessageSquare } from 'lucide-react';
+import { ScrambleReveal } from './ScrambleText';
 
 interface ReaderViewProps {
   items: MediaItem[];
@@ -59,7 +60,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({ items, language }) => {
               {`// ${item.metadata?.parentTitle || 'index'}`}
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-[1.02] text-white">
-              {item.content}
+              <ScrambleReveal text={item.content || ''} duration={900} delay={80} />
             </h1>
             <div
               className="mt-8 h-px w-full"

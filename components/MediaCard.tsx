@@ -4,6 +4,7 @@ import { MediaItem, NotionProperty, Language } from '../types';
 import { motion } from 'framer-motion';
 import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube, List, ListOrdered, Square, CheckSquare2, Quote, MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from '../services/i18nService';
+import { ScrambleReveal } from './ScrambleText';
 
 // Tipos para items agrupados
 interface GroupedMediaItem extends MediaItem {
@@ -227,7 +228,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
               </span>
             )}
             <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tighter">
-              {item.content}
+              <ScrambleReveal text={item.content || ''} duration={900} delay={80} />
             </h1>
           </div>
         );
