@@ -374,7 +374,7 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   if (isLoading && items.length === 0) {
     // Solo fondo negro mientras carga (sin loader); el contenido entra con fade.
-    return <div className="fixed inset-0 z-50 bg-[#0a0a0a]" />;
+    return <div className="fixed inset-0 z-50 bg-black" />;
   }
 
   // Modo lector (columna 0): una sola columna con estilo de lectura y color de acento.
@@ -388,11 +388,11 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
 
   if (items.length === 0) {
     return (
-      <div className="relative flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4 bg-[#0a0a0a]">
+      <div className="relative flex flex-col items-center justify-start min-h-screen w-full pt-[30vh] md:pt-[35vh] p-4 bg-black">
         {/* Fondo animado Dither (WebGL): aparece primero. Se desmonta al abrir el
             menú (ahorra recursos y evita partículas dobles). */}
         <AnimatePresence>
-          {!isMenuOpen && (
+          {!isMenuOpen && effectsEnabled && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

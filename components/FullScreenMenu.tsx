@@ -232,17 +232,19 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                 WebkitMaskImage: 'radial-gradient(115% 130% at 100% 50%, #000 42%, rgba(0,0,0,0.5) 62%, transparent 82%)',
               }}
             >
-              <Suspense fallback={null}>
-                <Dither
-                  waveColor={hexToRgb01(hoveredAccent)}
-                  waveSpeed={0.05}
-                  waveFrequency={3}
-                  waveAmplitude={0.3}
-                  colorNum={4}
-                  pixelSize={2}
-                  enableMouseInteraction={false}
-                />
-              </Suspense>
+              {effectsEnabled && (
+                <Suspense fallback={null}>
+                  <Dither
+                    waveColor={hexToRgb01(hoveredAccent)}
+                    waveSpeed={0.05}
+                    waveFrequency={3}
+                    waveAmplitude={0.3}
+                    colorNum={4}
+                    pixelSize={2}
+                    enableMouseInteraction={false}
+                  />
+                </Suspense>
+              )}
             </motion.div>
 
             {/* Preview a pantalla completa: icono grande con el color de acento */}

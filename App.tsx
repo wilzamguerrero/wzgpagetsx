@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NotionService, ROOT_PAGE_ID, SHOW_LOGS } from './services/notionService';
 import { extractAccentColor, getCachedAccent, setCachedAccent } from './services/accentColor';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
@@ -529,9 +530,22 @@ const App: React.FC = () => {
   const activeIcon = state.boards.find(b => b.id === state.activeBoardId)?.icon;
 
   return (
-    <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
-      {/* Iconos flotantes de fondo (usa el icono de la página actual), fondo plano */}
-      <BackgroundParticles icon={activeIcon} />
+    <div className="min-h-screen bg-black text-white flex overflow-x-hidden">
+      {/* Iconos flotantes de fondo (usa el icono de la página actual).
+          Se apagan/encienden suavemente con el botón FX y se desmontan para ahorrar recursos. */}
+      <AnimatePresence>
+        {effectsEnabled && (
+          <motion.div
+            key="bg-particles"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <BackgroundParticles icon={activeIcon} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Botón flotante para abrir el menú a pantalla completa */}
       <div className="fixed top-10 left-0 z-50 group/menu-toggle">

@@ -24,7 +24,7 @@ const cache = new Map<string, string>();
 
 // Cache persistente del acento por página (localStorage). Permite pintar el
 // color correcto al instante al recargar, sin esperar a que carguen los tableros.
-const ACCENT_CACHE_KEY = "accent_by_board";
+const ACCENT_CACHE_KEY = "accent_by_board_v2";
 
 export function getCachedAccent(boardId: string): string | null {
   try {
@@ -124,10 +124,12 @@ function colorFromImage(url: string): Promise<string> {
   });
 }
 
-// Promedia los píxeles vívidos (ignora transparentes, grises y casi negros)
-// y realza el resultado para que luzca bien como acento sobre fondo oscuro.
+// Elige el TONO (matiz) dominante más vívido usando un histograma de 12 buckets.
+// Promediar todos los píxeles daba colores apagados en iconos con varios tonos
+// (p. ej. un logo naranja con mucho negro). Así se toma el color de acento real.
 function dominantColor(data: Uint8ClampedArray): string {
-  let r = 0, g = 0, b = 0, count = 0;
+  const N = 12;
+  const buckets = Array.from({ length: N }, () => ({ r: 0, g: 0, b: 0, weight: 0 }));
 
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] < 128) continue; // casi transparente
@@ -137,11 +139,26 @@ function dominantColor(data: Uint8ClampedArray): string {
     const sat = max === 0 ? 0 : (max - min) / max;
     if (sat < 0.22) continue; // gris/blanco/negro
     if (max < 40) continue;   // demasiado oscuro
-    r += cr; g += cg; b += cb; count++;
+
+    const [h] = rgbToHsl(cr, cg, cb);
+    const bi = Math.min(N - 1, Math.floor(h * N));
+    const w = sat * (max / 255); // pondera por viveza
+    const bucket = buckets[bi];
+    bucket.r += cr * w;
+    bucket.g += cg * w;
+    bucket.b += cb * w;
+    bucket.weight += w;
   }
 
-  if (count === 0) return DEFAULT_ACCENT;
-  return boost(Math.round(r / count), Math.round(g / count), Math.round(b / count));
+  let best = buckets[0];
+  for (const b of buckets) if (b.weight > best.weight) best = b;
+  if (best.weight === 0) return DEFAULT_ACCENT;
+
+  return boost(
+    Math.round(best.r / best.weight),
+    Math.round(best.g / best.weight),
+    Math.round(best.b / best.weight)
+  );
 }
 
 // Convierte un color hex (#rrggbb) a canales "r g b" para usar en
