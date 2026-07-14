@@ -52,6 +52,9 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   const [currentPhrase, setCurrentPhrase] = useState(strings.phrases[0]);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [isPulsing, setIsPulsing] = useState(false);
+  // Centro del logo (para anclar ahí la interacción del fondo Dither).
+  const logoBoxRef = useRef<HTMLDivElement>(null);
+  const [logoFocus, setLogoFocus] = useState<{ x: number; y: number } | null>(null);
   
   // Chaotic shuffle state for glitch effect
   const [shuffledOrder, setShuffledOrder] = useState<string[]>([]);
@@ -161,6 +164,38 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
   useEffect(() => {
     setCurrentPhrase(strings.phrases[Math.floor(Math.random() * strings.phrases.length)]);
   }, [language]);
+
+  // Medir el centro del logo (normalizado 0..1) para anclar ahí el "hueco" del Dither.
+  useEffect(() => {
+    let raf = 0;
+    let count = 0;
+    const measure = () => {
+      const el = logoBoxRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0) {
+          setLogoFocus({
+            x: (r.left + r.width / 2) / window.innerWidth,
+            y: (r.top + r.height / 2) / window.innerHeight,
+          });
+        }
+      }
+      count++;
+      if (count < 45) raf = requestAnimationFrame(measure); // re-mide ~0.7s (tras fuentes/animación)
+    };
+    measure();
+    const onResize = () => {
+      const el = logoBoxRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setLogoFocus({
+        x: (r.left + r.width / 2) / window.innerWidth,
+        y: (r.top + r.height / 2) / window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
+  }, [items.length, isLoading]);
 
   useEffect(() => {
     if (items.length === 0 && !isLoading) {
@@ -363,12 +398,13 @@ export const MasonryGrid: React.FC<MasonryGridProps> = ({ items, isLoading, colu
               colorNum={4}
               pixelSize={2}
               enableMouseInteraction={false}
-              mouseRadius={0.3}
+              focusUV={logoFocus ? [logoFocus.x, logoFocus.y] : [0.5, 0.38]}
+              mouseRadius={0.35}
             />
           </Suspense>
         </div>
         <div className="relative z-10 flex flex-col items-center text-center w-full" style={{ maxWidth: '200px' }}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative w-52 h-52 md:w-60 md:h-60 bg-[#191919] border border-[#191919] rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
+          <motion.div ref={logoBoxRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative w-52 h-52 md:w-60 md:h-60 bg-[#191919] border border-[#191919] rounded-[32px] flex items-center justify-center overflow-hidden z-10 mb-8">
               <AnimatePresence>
                 {isPulsing && (
                   <motion.svg initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox="0 0 100 100" preserveAspectRatio="none">

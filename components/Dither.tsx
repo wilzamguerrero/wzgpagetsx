@@ -14,6 +14,9 @@ export interface DitherProps {
   disableAnimation?: boolean;
   enableMouseInteraction?: boolean;
   mouseRadius?: number;
+  // Punto fijo de "hueco" en coordenadas normalizadas 0..1 (y desde arriba).
+  // Si es null, se desactiva.
+  focusUV?: [number, number] | null;
 }
 
 const VERT = `#version 300 es
@@ -33,7 +36,6 @@ uniform float waveFrequency;
 uniform float waveAmplitude;
 uniform vec3 waveColor;
 uniform vec2 mousePos;
-uniform int enableMouseInteraction;
 uniform float mouseRadius;
 uniform float colorNum;
 uniform float pixelSize;
@@ -125,12 +127,14 @@ void main() {
 
   float f = pattern(wuv);
 
-  if (enableMouseInteraction == 1) {
+  // Hueco/oscurecimiento en 'mousePos' (incondicional; si el punto está fuera de
+  // pantalla el efecto vale 0). Se alimenta con el mouse o con un punto fijo.
+  {
     vec2 mouseNDC = (mousePos / resolution - 0.5) * vec2(1.0, -1.0);
     mouseNDC.x *= resolution.x / resolution.y;
     float dist = length(wuv - mouseNDC);
     float effect = 1.0 - smoothstep(0.0, mouseRadius, dist);
-    f -= 0.5 * effect;
+    f -= 1.3 * effect;
   }
 
   vec3 col = mix(vec3(0.0), waveColor, f);
@@ -161,11 +165,12 @@ export default function Dither({
   disableAnimation = false,
   enableMouseInteraction = true,
   mouseRadius = 1,
+  focusUV = null,
 }: DitherProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Props actuales accesibles dentro del bucle sin recrearlo.
-  const propsRef = useRef({ waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize, disableAnimation, enableMouseInteraction, mouseRadius });
-  propsRef.current = { waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize, disableAnimation, enableMouseInteraction, mouseRadius };
+  const propsRef = useRef({ waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize, disableAnimation, enableMouseInteraction, mouseRadius, focusUV });
+  propsRef.current = { waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize, disableAnimation, enableMouseInteraction, mouseRadius, focusUV };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -202,7 +207,6 @@ export default function Dither({
       waveAmplitude: gl.getUniformLocation(prog, 'waveAmplitude'),
       waveColor: gl.getUniformLocation(prog, 'waveColor'),
       mousePos: gl.getUniformLocation(prog, 'mousePos'),
-      enableMouseInteraction: gl.getUniformLocation(prog, 'enableMouseInteraction'),
       mouseRadius: gl.getUniformLocation(prog, 'mouseRadius'),
       colorNum: gl.getUniformLocation(prog, 'colorNum'),
       pixelSize: gl.getUniformLocation(prog, 'pixelSize'),
@@ -246,8 +250,16 @@ export default function Dither({
       gl.uniform1f(U.waveFrequency, p.waveFrequency);
       gl.uniform1f(U.waveAmplitude, p.waveAmplitude);
       gl.uniform3f(U.waveColor, p.waveColor[0], p.waveColor[1], p.waveColor[2]);
-      gl.uniform2f(U.mousePos, mouse.x, mouse.y);
-      gl.uniform1i(U.enableMouseInteraction, p.enableMouseInteraction ? 1 : 0);
+      // Punto del "hueco": fijo (focusUV) > mouse (si activo) > fuera de pantalla (sin efecto).
+      let mx = -1e6, my = -1e6;
+      if (p.focusUV) {
+        mx = p.focusUV[0] * canvas.width;
+        my = p.focusUV[1] * canvas.height;
+      } else if (p.enableMouseInteraction) {
+        mx = mouse.x;
+        my = mouse.y;
+      }
+      gl.uniform2f(U.mousePos, mx, my);
       gl.uniform1f(U.mouseRadius, p.mouseRadius);
       gl.uniform1f(U.colorNum, p.colorNum);
       gl.uniform1f(U.pixelSize, p.pixelSize);
