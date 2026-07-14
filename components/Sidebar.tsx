@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Folder, FileText, Database, ChevronRight, ChevronDown, ChevronLeft, 
     Maximize, Minimize, Circle, Home, UserRound, Sparkles, BookOpen,
-    ArrowDownWideNarrow, ArrowUpWideNarrow, Send
+    ArrowDownWideNarrow, ArrowUpWideNarrow, Send, LayoutGrid
 } from 'lucide-react';
 import { t } from '../services/i18nService';
 
@@ -28,6 +28,7 @@ interface SidebarProps {
   descending: boolean;
   onToggleOrder: () => void;
   onOpenContact: () => void;
+  onOpenMenu: () => void;
 }
 
 const MARKER_COLORS = [
@@ -226,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     boards, activeBoardId, onSelectBoard, onGoHome, isOpen, onToggle, 
     columnCount, onColumnChange, language, onToggleLanguage, showDatabaseNames,
     effectsEnabled, onToggleEffects, accentColor = '#00ffcb',
-    descending, onToggleOrder, onOpenContact
+    descending, onToggleOrder, onOpenContact, onOpenMenu
 }) => {
   const strings = t(language);
   const [boardMarkers, setBoardMarkers] = useState<Record<string, string>>({});
@@ -420,6 +421,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
                 <span className="text-[10px] text-gray-400">Contacto</span>
+              </div>
+            </div>
+
+            <div className="relative group/tooltip">
+              <button onClick={onOpenMenu} className={getActionBtnClass(false)}>
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400">Menú</span>
+                <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">M</span>
               </div>
             </div>
 

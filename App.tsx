@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NotionService, ROOT_PAGE_ID, SHOW_LOGS } from './services/notionService';
 import { extractAccentColor, getCachedAccent, setCachedAccent } from './services/accentColor';
 import { AppState, Board, MediaItem, NotionProperty } from './types';
-import { Sidebar } from './components/Sidebar';
 import { MasonryGrid } from './components/MasonryGrid';
-import { GlitchOverlay } from './components/GlitchOverlay';
 import { ContactPanel } from './components/ContactPanel';
+import { FullScreenMenu } from './components/FullScreenMenu';
 import { BackgroundParticles } from './components/BackgroundParticles';
 import { t } from './services/i18nService';
 
@@ -65,8 +64,8 @@ const App: React.FC = () => {
   // ID de tablero pendiente de abrir por deep-link (una vez cargados los tableros)
   const pendingDeepLinkRef = useRef<string | null>(null);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Detectar si es móvil para columnas por defecto
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const [columnCount, setColumnCount] = useState(isMobile ? 1 : 4);
@@ -144,9 +143,9 @@ const App: React.FC = () => {
       // Ignorar si estamos en un input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target as HTMLElement).isContentEditable) return;
       
-      // Toggle sidebar con 'Z'
-      if (e.key.toLowerCase() === 'z') {
-        setIsSidebarOpen(prev => !prev);
+      // Menú a pantalla completa con 'Z' o 'M'
+      if (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'm') {
+        setIsMenuOpen(prev => !prev);
         return;
       }
       
@@ -532,36 +531,19 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-background text-white flex overflow-x-hidden">
       {/* Iconos flotantes de fondo (usa el icono de la página actual), fondo plano */}
       <BackgroundParticles icon={activeIcon} />
-      {/* Glitch overlay with chromatic aberration - only when effects enabled */}
-      <GlitchOverlay isActive={isSidebarOpen && effectsEnabled} />
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 transition-opacity" onClick={() => setIsSidebarOpen(false)} />
-      )}
-      <Sidebar
-        boards={state.boards}
-        activeBoardId={state.activeBoardId}
-        onSelectBoard={handleSelectBoard}
-        onGoHome={handleGoHome}
-        onCreateBoard={async (p, title) => {
-          const b = await notionServiceRef.current!.createBoard(p === 'root' ? state.rootPageId : p, title);
-          setState(prev => ({ ...prev, boards: [...prev.boards, b] }));
-          return b;
-        }}
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        columnCount={columnCount}
-        onColumnChange={setColumnCount}
-        language={state.language}
-        onToggleLanguage={() => setState(prev => ({ ...prev, language: prev.language === 'es' ? 'en' : 'es' }))}
-        showDatabaseNames={SHOW_DATABASE_NAMES}
-        effectsEnabled={effectsEnabled}
-        onToggleEffects={() => setEffectsEnabled(prev => !prev)}
-        accentColor={accentColor}
-        descending={descending}
-        onToggleOrder={handleToggleOrder}
-        onOpenContact={() => setIsContactOpen(true)}
-      />
-      <main className={`relative z-10 flex-1 transition-all duration-500 flex flex-col min-w-0 ${isSidebarOpen ? `lg:blur-none blur-sm ${effectsEnabled ? 'glitch-active' : ''}` : ''}`}>
+
+      {/* Botón flotante para abrir el menú a pantalla completa */}
+      <div className="fixed top-10 left-0 z-50 group/menu-toggle">
+        <button onClick={() => setIsMenuOpen(true)} className="w-6 h-12 bg-surface border-y border-r border-white/5 rounded-r-xl shadow-lg transition-all text-primary flex items-center justify-center">
+          <div className="w-1 h-4 bg-primary mx-auto rounded-full" />
+        </button>
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-surface border border-white/10 rounded-lg opacity-0 group-hover/menu-toggle:opacity-100 transition-opacity pointer-events-none whitespace-nowrap flex items-center gap-1.5">
+          <span className="text-[10px] text-gray-400">Menu</span>
+          <span className="text-[9px] text-primary font-bold bg-white/10 px-1.5 py-0.5 rounded">Z</span>
+        </div>
+      </div>
+
+      <main className="relative z-10 flex-1 flex flex-col min-w-0">
         {state.error && (
             <div className="mx-auto mt-10 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 max-w-2xl text-center">
                 <p className="font-bold">{strings.errorTitle}</p>
@@ -576,7 +558,7 @@ const App: React.FC = () => {
             columnCount={columnCount} 
             language={state.language} 
             onReorder={handleReorder}
-            isSidebarOpen={isSidebarOpen}
+            isSidebarOpen={false}
             effectsEnabled={effectsEnabled}
             accentColor={accentColor}
           />
@@ -586,6 +568,26 @@ const App: React.FC = () => {
       {isContactOpen && (
         <ContactPanel onClose={() => setIsContactOpen(false)} accentColor={accentColor} />
       )}
+
+      <FullScreenMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        boards={state.boards}
+        activeBoardId={state.activeBoardId}
+        onSelectBoard={handleSelectBoard}
+        onGoHome={handleGoHome}
+        showDatabaseNames={SHOW_DATABASE_NAMES}
+        accentColor={accentColor}
+        columnCount={columnCount}
+        onColumnChange={setColumnCount}
+        language={state.language}
+        onToggleLanguage={() => setState(prev => ({ ...prev, language: prev.language === 'es' ? 'en' : 'es' }))}
+        effectsEnabled={effectsEnabled}
+        onToggleEffects={() => setEffectsEnabled(prev => !prev)}
+        descending={descending}
+        onToggleOrder={handleToggleOrder}
+        onOpenContact={() => setIsContactOpen(true)}
+      />
     </div>
   );
 };
