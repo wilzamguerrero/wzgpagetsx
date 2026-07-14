@@ -55,6 +55,10 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
   // Ruta de navegación (drill-down). Vacío = nivel superior.
   const [path, setPath] = useState<Board[]>([]);
   const menuRestoredRef = useRef(false);
+  // Ciclo de frases/logo idéntico al del home.
+  const [currentPhrase, setCurrentPhrase] = useState('');
+  const [isTextVisible, setIsTextVisible] = useState(true);
+  const [isPulsing, setIsPulsing] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -89,6 +93,35 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
   useEffect(() => {
     try { localStorage.setItem('menu_path', JSON.stringify(path.map(b => b.id))); } catch { /* ignorar */ }
   }, [path]);
+
+  // Frase inicial al cambiar de idioma.
+  useEffect(() => {
+    setCurrentPhrase(strings.phrases[Math.floor(Math.random() * strings.phrases.length)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
+
+  // Ciclo EXACTO del home: texto visible (5s) → oculto (7s) → puntos + línea punteada (3s) → nueva frase.
+  useEffect(() => {
+    let timeoutId: number;
+    const runCycle = () => {
+      setIsTextVisible(true);
+      setIsPulsing(false);
+      timeoutId = window.setTimeout(() => {
+        setIsTextVisible(false);
+        timeoutId = window.setTimeout(() => {
+          setIsPulsing(true);
+          timeoutId = window.setTimeout(() => {
+            const randomIndex = Math.floor(Math.random() * strings.phrases.length);
+            setCurrentPhrase(strings.phrases[randomIndex]);
+            runCycle();
+          }, 3000);
+        }, 7000);
+      }, 5000);
+    };
+    runCycle();
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   // Escape: retrocede un nivel o cierra; sincroniza pantalla completa.
   useEffect(() => {
@@ -206,7 +239,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
             className="fixed inset-0 z-[120] text-white flex flex-col"
             style={{
               fontFamily: MONO,
-              backgroundColor: 'rgba(16, 16, 16, 0.88)',
+              backgroundColor: 'rgba(16, 16, 16, 0.96)',
             }}
           >
             {/* Preview a pantalla completa: icono grande con el color de acento */}
@@ -296,8 +329,12 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
 
             {/* Lista de tableros del nivel actual */}
             <div
-              className="relative z-10 flex-1 overflow-y-auto no-scrollbar px-6 sm:px-10 py-6 flex flex-col"
+              className="relative z-10 flex-1 overflow-y-auto no-scrollbar flex flex-col px-6 sm:px-10"
               onMouseLeave={() => setHoveredId(null)}
+              style={{
+                maskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 20%, #000 80%, transparent 100%)',
+              }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -306,7 +343,7 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -24 }}
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-full max-w-3xl mx-auto my-auto"
+                  className="w-full max-w-3xl mx-auto my-auto py-14"
                 >
                   {currentItems.length === 0 ? (
                     <div className="h-40 flex items-center justify-center text-white/30 text-sm uppercase tracking-widest">
@@ -353,8 +390,8 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Barra inferior: acciones (izq) + copyright vertical (der), sin fondo ni borde */}
-            <div className="relative z-10 flex items-end justify-between gap-3 px-6 sm:px-10 pb-6">
+            {/* Barra inferior: solo acciones (izq). El copyright va posicionado aparte. */}
+            <div className="relative z-10 flex items-center px-6 sm:px-10 pb-6">
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={onToggleLanguage} className={actionBtn(false)} title={strings.language}>
                   <span className="text-[10px] font-black text-primary tracking-wider">{language.toUpperCase()}</span>
@@ -378,21 +415,73 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                   <Home className="w-4 h-4" />
                 </button>
               </div>
+            </div>
 
-              {/* Copyright vertical (estilo referencia), base alineada con los botones */}
-              <div className="flex gap-1.5 select-none items-end">
-                <span
-                  className="text-[9px] uppercase tracking-[0.25em] text-white font-medium whitespace-nowrap leading-none"
-                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            {/* Frases + logo + copyright (posición absoluta para no afectar el layout) */}
+            <div className="absolute bottom-6 right-6 sm:right-10 z-10 flex items-end gap-4 select-none pointer-events-none">
+              {/* Frases / puntos (a la izquierda del logo) */}
+              <div className="hidden sm:flex items-center justify-end h-20 max-w-[220px]">
+                <AnimatePresence mode="wait">
+                  {isTextVisible ? (
+                    <motion.p
+                      key={currentPhrase}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 1 }}
+                      className="text-gray-400 text-[10px] md:text-xs font-medium opacity-80 text-right"
+                    >
+                      {currentPhrase}
+                    </motion.p>
+                  ) : isPulsing ? (
+                    <motion.div key="dots" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-3 items-center justify-center">
+                      {[0, 0.2, 0.4].map(d => <div key={d} className="w-1 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${d}s` }}></div>)}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+
+              {/* Columna derecha: copyright (3 líneas verticales) arriba + logo abajo */}
+              <div className="flex flex-col items-end gap-3">
+                {/* Copyright vertical en 3 líneas */}
+                <div className="flex gap-1.5 items-end">
+                  <span
+                    className="text-[9px] uppercase tracking-[0.25em] text-white font-medium whitespace-nowrap leading-none"
+                    style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  >
+                    Portfolio
+                  </span>
+                  <span
+                    className="text-[9px] uppercase tracking-[0.25em] text-white font-medium whitespace-nowrap leading-none"
+                    style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  >
+                    WilZamGuerrero
+                  </span>
+                  <span
+                    className="text-[9px] uppercase tracking-[0.25em] text-white font-medium whitespace-nowrap leading-none"
+                    style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  >
+                    All Rights Reserved
+                  </span>
+                </div>
+
+                {/* Logo (gif recortado + línea punteada por encima, solo al pulsar) */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative w-20 h-20 shrink-0"
                 >
-                  WilZamGuerrero Portfolio
-                </span>
-                <span
-                  className="text-[9px] uppercase tracking-[0.25em] text-white font-medium whitespace-nowrap leading-none"
-                  style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                >
-                  All Rights Reserved
-                </span>
+                  <div className="absolute inset-0 bg-[#191919] rounded-[18px] overflow-hidden flex items-center justify-center">
+                    <img src="https://iili.io/fc6Elv2.gif" alt="Logo" className="w-16 h-16 object-contain pointer-events-none select-none" />
+                  </div>
+                  <AnimatePresence>
+                    {isPulsing && (
+                      <motion.svg initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 w-full h-full pointer-events-none z-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <motion.rect x="0.5" y="0.5" width="99" height="99" rx="18" fill="none" stroke="#00ffcc" strokeWidth="1" strokeDasharray="4 2" animate={{ strokeDashoffset: [0, -6] }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+                      </motion.svg>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </div>
             </div>
           </motion.div>
