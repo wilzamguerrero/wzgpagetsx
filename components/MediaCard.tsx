@@ -1,7 +1,6 @@
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState } from 'react';
 import { MediaItem, NotionProperty, Language } from '../types';
-import { motion } from 'framer-motion';
 import { Play, ExternalLink, Code, FileDown, Download, Calendar, Hash, CheckSquare, Tag, Link, Mail, Phone, User, Type, Clock, PenLine, Youtube, List, ListOrdered, Square, CheckSquare2, Quote, MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from '../services/i18nService';
 import { ScrambleReveal } from './ScrambleText';
@@ -135,7 +134,6 @@ const PropertiesCard: React.FC<{ properties: NotionProperty[], language: Languag
 
 interface MediaCardProps {
   item: MediaItem;
-  onDragEnd?: (id: string, info: any) => void;
   index?: number;
   orderIndex?: number; // Número de orden basado en Notion
   language?: Language;
@@ -153,11 +151,10 @@ const OrderBadge: React.FC<{ index: number }> = ({ index }) => (
   </div>
 );
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderIndex, language = 'es' }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({ item, orderIndex, language = 'es' }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   
   const handleMouseEnter = () => {
     if (!isInteracting && videoRef.current && item.type === 'video') {
@@ -174,7 +171,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
   };
 
   const handleVideoClick = (e: React.MouseEvent) => {
-      if (isDragging) return;
+      if ((e.currentTarget as HTMLElement).closest('.muuri-item-dragging, .muuri-item-releasing')) return;
       e.stopPropagation();
       e.preventDefault();
       if (videoRef.current) {
@@ -185,33 +182,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
       }
   };
 
-  // Detectar si es móvil/touch para deshabilitar drag
-  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  
-  const cardWrapperClasses = `group relative w-full rounded-2xl overflow-hidden bg-surface shadow-md border border-black ${isTouchDevice ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} select-none ${isTouchDevice ? '' : 'touch-none'} transition-colors duration-300 hover:border-white/10`;
-
-  const dragConfig = useMemo(() => ({
-    drag: isTouchDevice ? false : true as const,
-    dragSnapToOrigin: true,
-    dragElastic: 0.1, 
-    dragMomentum: false,
-    dragListener: !isTouchDevice,
-    onDragStart: () => setIsDragging(true),
-    onDragEnd: (_event: any, info: any) => {
-      // Resetear inmediatamente para liberar el cursor
-      setIsDragging(false);
-      if (onDragEnd) onDragEnd(item.id, info);
-    },
-    whileDrag: { 
-      scale: 1.02,
-      zIndex: 100,
-      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.8)",
-      opacity: 0.98,
-      cursor: 'grabbing'
-    },
-    dragTransition: { bounceStiffness: 600, bounceDamping: 25 },
-    transition: { type: "spring" as const, stiffness: 600, damping: 30, mass: 0.4 }
-  }), [item.id, onDragEnd]);
+  const cardWrapperClasses = 'group relative w-full rounded-2xl overflow-hidden bg-surface shadow-md border border-black cursor-grab active:cursor-grabbing select-none transition-colors duration-300 hover:border-white/10';
 
   const preventNativeDrag = (e: React.DragEvent | React.MouseEvent) => {
     e.preventDefault();
@@ -236,7 +207,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
         return (
           <div className="relative w-full bg-black overflow-hidden flex items-center justify-center min-h-[100px]">
             <div 
-                className={`w-full h-auto ${isDragging ? 'pointer-events-none' : ''}`}
+                className="w-full h-auto"
                 onClick={handleVideoClick}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -284,18 +255,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
               <iframe
                 src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={item.caption || 'YouTube video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isDragging ? 'pointer-events-none' : ''}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
-              {isDragging && (
-                <div className="absolute inset-0 z-40 cursor-grabbing" />
-              )}
             </div>
-            {/* Barra de arrastre - solo esta zona permite arrastrar (barra + 4px arriba) */}
-            <div className="absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
+            <div className="muuri-drag-handle absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
           </div>
         );
@@ -312,18 +278,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
               <iframe
                 src={`https://www.loom.com/embed/${loomVideoId}`}
                 title={item.caption || 'Loom video'}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isDragging ? 'pointer-events-none' : ''}`}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 onLoad={() => setIsLoaded(true)}
               />
-              {/* Capa completa durante el arrastre para evitar que el iframe capture eventos */}
-              {isDragging && (
-                <div className="absolute inset-0 z-40 cursor-grabbing" />
-              )}
             </div>
-            {/* Barra de arrastre - solo esta zona permite arrastrar (barra + 4px arriba) */}
-            <div className="absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
+            <div className="muuri-drag-handle absolute bottom-0 left-0 w-full h-[10px] cursor-grab active:cursor-grabbing z-30 bg-transparent" />
             <div className="absolute bottom-0 left-0 w-full h-1.5 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
           </div>
         );
@@ -370,7 +331,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
       case 'image':
         return (
           <div 
-            className={`gallery-item block relative bg-black min-h-[150px] w-full cursor-zoom-in overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
+            className="gallery-item block relative bg-black min-h-[150px] w-full cursor-zoom-in overflow-hidden"
             data-src={item.url}
             data-sub-html={item.caption ? `<h4>${item.caption}</h4>` : ''}
             onDragStart={preventNativeDrag}
@@ -400,7 +361,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
         return <p className="text-gray-200 text-[15px] leading-relaxed whitespace-pre-wrap font-medium p-6">{item.content}</p>;
       case 'file':
         return (
-          <div className="p-5 flex items-center gap-4 hover:bg-white/5" onClick={() => !isDragging && window.open(item.url, '_blank')}>
+          <div className="p-5 flex items-center gap-4 hover:bg-white/5" onClick={() => window.open(item.url, '_blank')}>
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <FileDown className="w-6 h-6 text-primary" />
             </div>
@@ -426,7 +387,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
                     <Code className="w-3.5 h-3.5 text-primary" />
                     <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">{item.metadata?.language || 'code'}</span>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); if(!isDragging) navigator.clipboard.writeText(item.content || ''); }} className="text-[10px] text-gray-500 hover:text-primary transition-colors uppercase font-bold relative z-10">Copy</button>
+                <button data-no-drag onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(item.content || ''); }} className="text-[10px] text-gray-500 hover:text-primary transition-colors uppercase font-bold relative z-10">Copy</button>
             </div>
             <div className="p-4 bg-black/40 overflow-hidden">
                 <pre className="text-[13px] font-mono text-emerald-400/90 whitespace-pre-wrap break-words"><code>{item.content}</code></pre>
@@ -435,7 +396,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
         );
       case 'link':
         return (
-          <div className="p-5 flex flex-col gap-2" onClick={() => !isDragging && window.open(item.url, '_blank')}>
+          <div className="p-5 flex flex-col gap-2" onClick={() => window.open(item.url, '_blank')}>
               <div className="flex items-center gap-2">
                   <ExternalLink className="w-4 h-4 text-primary group-hover/link:scale-110 transition-transform" />
                   <span className="text-[11px] text-primary/70 font-bold uppercase tracking-widest truncate">Enlace</span>
@@ -529,14 +490,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onDragEnd, orderInde
   };
 
   return (
-    <motion.div
-      layout
-      {...dragConfig}
-      className={cardWrapperClasses}
-    >
+    <div className={cardWrapperClasses}>
       {orderIndex !== undefined && <OrderBadge index={orderIndex} />}
       {renderContent()}
-    </motion.div>
+      <div className="muuri-drag-handle absolute inset-x-0 bottom-0 z-50 h-2 cursor-grab active:cursor-grabbing" aria-hidden="true" />
+    </div>
   );
 };
 
@@ -549,39 +507,10 @@ interface GroupedCardProps {
   language?: Language;
   groupId: string;
   orderIndex?: number; // Número de orden basado en Notion
-  onDragEnd?: (id: string, info: any) => void;
 }
 
-export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId, orderIndex, onDragEnd }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  
-  // Detectar si es móvil/touch para deshabilitar drag
-  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  
-  const cardWrapperClasses = `group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black ${isTouchDevice ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} select-none ${isTouchDevice ? '' : 'touch-none'} transition-colors duration-300 hover:border-white/10`;
-
-  const dragConfig = useMemo(() => ({
-    drag: isTouchDevice ? false : true as const,
-    dragSnapToOrigin: true,
-    dragElastic: 0.1, 
-    dragMomentum: false,
-    dragListener: !isTouchDevice,
-    onDragStart: () => setIsDragging(true),
-    onDragEnd: (_event: any, info: any) => {
-      // Resetear inmediatamente para liberar el cursor
-      setIsDragging(false);
-      if (onDragEnd) onDragEnd(groupId, info);
-    },
-    whileDrag: { 
-      scale: 1.02,
-      zIndex: 100,
-      boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.8)",
-      opacity: 0.98,
-      cursor: 'grabbing'
-    },
-    dragTransition: { bounceStiffness: 600, bounceDamping: 25 },
-    transition: { type: "spring" as const, stiffness: 600, damping: 30, mass: 0.4 }
-  }), [groupId, onDragEnd]);
+export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es', groupId: _groupId, orderIndex }) => {
+  const cardWrapperClasses = 'group relative w-full rounded-2xl overflow-hidden bg-gradient-to-br from-surface to-black/40 shadow-md border border-black cursor-grab active:cursor-grabbing select-none transition-colors duration-300 hover:border-white/10';
 
   const renderGroupItem = (item: MediaItem, index: number, allItems: MediaItem[]) => {
     switch (item.type) {
@@ -699,15 +628,12 @@ export const GroupedCard: React.FC<GroupedCardProps> = ({ items, language = 'es'
   };
 
   return (
-    <motion.div
-      layout
-      {...dragConfig}
-      className={cardWrapperClasses}
-    >
+    <div className={cardWrapperClasses}>
       {orderIndex !== undefined && <OrderBadge index={orderIndex} />}
       <div className="pb-4">
         {items.map((item, index) => renderGroupItem(item, index, items))}
       </div>
-    </motion.div>
+      <div className="muuri-drag-handle absolute inset-x-0 bottom-0 z-50 h-2 cursor-grab active:cursor-grabbing" aria-hidden="true" />
+    </div>
   );
 };

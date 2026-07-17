@@ -12,7 +12,7 @@ const hexToRgb01 = (hex: string): [number, number, number] => {
 };
 import {
   X, Home, UserRound, Sparkles, BookOpen, ChevronRight, ArrowLeft,
-  ArrowDownWideNarrow, ArrowUpWideNarrow, Send, Maximize, Minimize
+  ArrowDownWideNarrow, ArrowUpWideNarrow, Send, Maximize, Minimize, RotateCcw
 } from 'lucide-react';
 import { Board, Language } from '../types';
 import { extractAccentColor, getCachedAccent } from '../services/accentColor';
@@ -28,6 +28,7 @@ interface FullScreenMenuProps {
   accentColor?: string;
   columnCount: number;
   onColumnChange: (cols: number) => void;
+  onResetCardScales?: () => void;
   language: Language;
   onToggleLanguage: () => void;
   effectsEnabled: boolean;
@@ -53,7 +54,7 @@ const cleanTitle = (b: Board): string =>
 export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
   isOpen, onClose, boards, activeBoardId, onSelectBoard, onGoHome,
   showDatabaseNames, accentColor = '#00ffcb',
-  columnCount, onColumnChange, language, onToggleLanguage,
+  columnCount, onColumnChange, onResetCardScales, language, onToggleLanguage,
   effectsEnabled, onToggleEffects, descending, onToggleOrder, onOpenContact,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -267,7 +268,8 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
 
             {/* Barra superior: columnas (izq) + cerrar (der), sin fondo ni borde */}
             <div className="relative z-10 flex items-center justify-between gap-3 px-6 sm:px-10 pt-6">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2.5">
+                {/* Modo lectura (columna 0) */}
                 <button
                   onClick={() => onColumnChange(0)}
                   title="Modo lectura"
@@ -276,15 +278,40 @@ export const FullScreenMenu: React.FC<FullScreenMenuProps> = ({
                 >
                   <BookOpen className="w-3.5 h-3.5" /><span>0</span>
                 </button>
-                {[1, 2, 3, 4, 5, 6].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => onColumnChange(n)}
-                    className={`h-9 w-9 flex items-center justify-center rounded-lg text-[11px] font-bold transition-all ${columnCount === n ? 'bg-primary text-black shadow-lg' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+
+                {/* Columnas 1-6: slider horizontal que cambia el número al moverlo */}
+                <div className="flex items-center gap-2 h-9 px-3 rounded-lg bg-white/5 border border-white/5">
+                  <input
+                    type="range"
+                    min={1}
+                    max={6}
+                    step={1}
+                    value={columnCount < 1 ? 1 : columnCount}
+                    onChange={(e) => onColumnChange(parseInt(e.target.value, 10))}
+                    className="col-slider w-24 sm:w-32"
+                    style={{ ['--pct' as any]: `${(((columnCount < 1 ? 1 : columnCount) - 1) / 5) * 100}%` }}
+                    aria-label="Columnas"
+                  />
+                  <span
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-black text-[11px] font-bold shrink-0"
+                    style={{ backgroundColor: columnCount >= 1 ? accentColor : 'rgba(255,255,255,0.2)' }}
                   >
-                    {n}
+                    {columnCount >= 1 ? columnCount : '–'}
+                  </span>
+                </div>
+
+                {/* Restaurar tamaños personalizados de las tarjetas */}
+                {onResetCardScales && (
+                  <button
+                    type="button"
+                    onClick={onResetCardScales}
+                    title={language === 'es' ? 'Restaurar tamaños' : 'Reset sizes'}
+                    aria-label={language === 'es' ? 'Restaurar tamaños de tarjetas' : 'Reset card sizes'}
+                    className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 text-gray-400 border border-white/5 hover:text-white transition-all"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </button>
-                ))}
+                )}
               </div>
 
               <div className="flex items-center gap-3 shrink-0 min-w-0">

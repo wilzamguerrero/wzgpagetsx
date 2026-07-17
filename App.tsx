@@ -71,6 +71,8 @@ const App: React.FC = () => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   // Por defecto: modo lectura (columna 0).
   const [columnCount, setColumnCount] = useState(0);
+  // Incrementar esta versión ordena al grid borrar todos los tamaños personalizados.
+  const [cardScaleResetVersion, setCardScaleResetVersion] = useState(0);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const [accentColor, setAccentColor] = useState('#00ffcb');
   // Orden del contenido. false = orden natural de Notion (por defecto, como estaba);
@@ -571,6 +573,7 @@ const App: React.FC = () => {
             items={state.media} 
             isLoading={state.isLoading} 
             columnCount={columnCount} 
+            scaleResetVersion={cardScaleResetVersion}
             language={state.language} 
             onReorder={handleReorder}
             isSidebarOpen={false}
@@ -596,6 +599,7 @@ const App: React.FC = () => {
         accentColor={accentColor}
         columnCount={columnCount}
         onColumnChange={setColumnCount}
+        onResetCardScales={() => setCardScaleResetVersion(version => version + 1)}
         language={state.language}
         onToggleLanguage={() => setState(prev => ({ ...prev, language: prev.language === 'es' ? 'en' : 'es' }))}
         effectsEnabled={effectsEnabled}

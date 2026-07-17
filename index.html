@@ -483,6 +483,52 @@
         }
       }
 
+      /* === SLIDER DE COLUMNAS (menú) === */
+      .col-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        border-radius: 9999px;
+        background: linear-gradient(
+          to right,
+          var(--reader-accent, #00ffcb) 0%,
+          var(--reader-accent, #00ffcb) var(--pct, 0%),
+          rgba(255, 255, 255, 0.15) var(--pct, 0%),
+          rgba(255, 255, 255, 0.15) 100%
+        );
+        outline: none;
+        cursor: pointer;
+      }
+      .col-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--reader-accent, #00ffcb);
+        border: 2px solid #000;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      .col-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+      .col-slider::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--reader-accent, #00ffcb);
+        border: 2px solid #000;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+      }
+      .col-slider::-moz-range-track {
+        height: 4px;
+        border-radius: 9999px;
+        background: transparent;
+      }
+
       /* === CHAOTIC CARD SHUFFLE EFFECT === */
       .shuffling-active {
         perspective: 1000px;
@@ -492,32 +538,59 @@
         transform-style: preserve-3d;
       }
 
-      /* Add subtle glitch to cards during shuffle */
+      /* Glitch visual sin transformar la caja que Muuri está midiendo. */
       .shuffling-active [data-card-id] {
         animation: card-glitch 0.5s ease-in-out;
       }
 
       @keyframes card-glitch {
-        0% { 
-          transform: translateX(0) rotateY(0deg);
-          filter: brightness(1);
+        0%, 100% {
+          filter: brightness(1) hue-rotate(0deg);
+          opacity: 1;
         }
-        25% { 
-          transform: translateX(-3px) rotateY(-2deg);
+        25% {
           filter: brightness(1.1) hue-rotate(5deg);
+          opacity: 0.97;
         }
-        50% { 
-          transform: translateX(3px) rotateY(2deg);
+        50% {
           filter: brightness(0.9) hue-rotate(-5deg);
+          opacity: 0.99;
         }
-        75% { 
-          transform: translateX(-2px) rotateY(-1deg);
-          filter: brightness(1.05);
+        75% {
+          filter: brightness(1.05) hue-rotate(2deg);
+          opacity: 0.98;
         }
-        100% { 
-          transform: translateX(0) rotateY(0deg);
-          filter: brightness(1);
-        }
+      }
+
+      /* Muuri controla exclusivamente el transform del wrapper exterior. */
+      .muuri-grid-item {
+        z-index: 1;
+      }
+
+      .muuri-grid-item.muuri-item-dragging {
+        z-index: 100;
+      }
+
+      .muuri-grid-item.muuri-item-releasing {
+        z-index: 90;
+      }
+
+      .muuri-grid-item > .muuri-item-content {
+        transition:
+          transform 180ms ease,
+          box-shadow 180ms ease,
+          opacity 180ms ease;
+      }
+
+      .muuri-grid-item.muuri-item-dragging > .muuri-item-content {
+        transform: scale(1.02);
+        opacity: 0.98;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8);
+      }
+
+      .muuri-grid-item.muuri-item-dragging iframe,
+      .muuri-grid-item.muuri-item-dragging video {
+        pointer-events: none;
       }
 
       /* ====== FONDO: ICONOS FLOTANTES (basado en el efecto de UpZ) ====== */
